@@ -54,7 +54,7 @@ namespace Nektar
 namespace NekMesh
 {
 ModuleKey ProcessBL::className = GetModuleFactory().RegisterCreatorFunction(
-    ModuleKey(eProcessModule, "blNew"), ProcessBL::create,
+    ModuleKey(eProcessModule, "bl"), ProcessBL::create,
     "Refines a prismatic or quadrilateral boundary layers. Updated version - FaceNodes + EdgeNodes");
 
 int **helper2d(int lda, int arr[][2])
@@ -599,15 +599,15 @@ void ProcessBL::BoundaryLayer3D()
     validElTypes.insert(LibUtilities::ePrism);
     validElTypes.insert(LibUtilities::eHexahedron);
 
-    int nodeId = m_mesh->m_vertexSet.size();
+    //int nodeId = m_mesh->m_vertexSet.size();
     int nl     = m_config["layers"].as<int>();
     int nq     = m_config["nq"].as<int>();
 
     // determine if geometric ratio is string or a constant.
     LibUtilities::Interpreter rEval;
     NekDouble r        = 1;
-    int rExprId        = -1;
-    bool ratioIsString = false;
+    //int rExprId        = -1;
+    //bool ratioIsString = false;
 
     if (m_config["r"].isType<NekDouble>())
     {
@@ -615,9 +615,10 @@ void ProcessBL::BoundaryLayer3D()
     }
     else
     {
-        std::string rstr = m_config["r"].as<string>();
-        rExprId          = rEval.DefineFunction("x y z", rstr);
-        ratioIsString    = true;
+        m_log(FATAL) << "R is string only in 2D possible - give Double." << endl ; 
+        //std::string rstr = m_config["r"].as<string>();
+        //rExprId          = rEval.DefineFunction("x y z", rstr);
+        //ratioIsString    = true;
     }
 
     // Prismatic node -> face map.
@@ -1751,7 +1752,7 @@ void ProcessBL::BoundaryLayer3D()
     
 
 
-    boost::ignore_unused(nodeId, rExprId, ratioIsString);
+    //boost::ignore_unused(nodeId, rExprId, ratioIsString);
 
     m_log(WARNING) << "m_mesh->m_element[3].size()= "<< m_mesh->m_element[3].size() << endl ; 
     m_log(WARNING) <<  "m_mesh->m_element[2].size()= " <<m_mesh->m_element[2].size() << endl ;  
