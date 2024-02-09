@@ -590,9 +590,7 @@ void ProcessBL::BoundaryLayer2D()
 
 void ProcessBL::BoundaryLayer3D()
 {
-    m_log(WARNING) << "m_mesh->m_element[3].size()= "<< m_mesh->m_element[3].size() << endl ; 
-    m_log(WARNING) <<  "m_mesh->m_element[2].size()= " <<m_mesh->m_element[2].size() << endl ;  
-    m_log(WARNING) <<  "m_mesh->m_face.size()= " <<m_mesh->m_faceSet.size() << endl ;  
+    m_log(VERBOSE) << "Elements before = "<< m_mesh->m_element[3].size() << endl ; 
 
     // A set containing all element types which are valid.
     set<LibUtilities::ShapeType> validElTypes;
@@ -971,7 +969,7 @@ void ProcessBL::BoundaryLayer3D()
     vector<ElementSharedPtr> el = m_mesh->m_element[m_mesh->m_expDim];
     m_mesh->m_element[m_mesh->m_expDim].clear();
 
-    // KK START !!!
+    // Start of the new module, improving surface accuracy from here !!!
     map<int , ElementSharedPtr > FaceIDtoEL2D ; 
     map<int, SpatialDomains::Geometry3DSharedPtr> geomMap;
     map<int, SpatialDomains::GeometrySharedPtr> edgeGeomMap;
@@ -1005,19 +1003,9 @@ void ProcessBL::BoundaryLayer3D()
             if(el[i]->GetFace(j)->m_elLink.size() == 1) 
             {
                 // find the element 2D layer
-                //  m_log(VERBOSE) << "GetBoundaryLink "<<el[i]->GetBoundaryLink(j) << endl ; 
-                //  m_log(VERBOSE) << "ELmacro ID  "<< el[i]->GetId() << endl ;
-                
-                // m_log(VERBOSE) << "FaceID = " << el[i]->GetFace(j)->m_id << endl ; 
-                
                 int ElIndex2D = el[i]->GetBoundaryLink(j) ; 
 
-                FaceIDtoEL2D[el[i]->GetFace(j)->m_id] = m_mesh->m_element[2][ElIndex2D]; 
-                
-                //m_log(VERBOSE) << "FaceID from the MAP = " << FaceIDtoEL2D[el[i]->GetFace(j)->m_id]->GetId() << endl ; 
-
-                // allocated to the map 
-                //MacroIDtoBoundaryPtrMap[elId] = element[2]; 
+                FaceIDtoEL2D[el[i]->GetFace(j)->m_id] = m_mesh->m_element[2][ElIndex2D];                 
             }
 
         }
@@ -1068,17 +1056,10 @@ void ProcessBL::BoundaryLayer3D()
                 PrismEdgesCopy.push_back(edgeCopy);
             }
         }
-        // 3 
-        //m_log(WARNING) << "PrismEdgesCopy = " << PrismEdgesCopy.size() <<endl ; 
 
     }
 
-    // 2. Create the edge splitting and fill the PrismEdgesCopy with BL distribution with correct directionality
-    // Stadard GLL distribution 
-    // LibUtilities::PointsKey ekey(nq, LibUtilities::eGaussLobattoLegendre);
-    // Array<OneD, NekDouble> gll;
-    // LibUtilities::PointsManager()[ekey]->GetPoints(gll);
-    
+    // 2. Create the edge splitting and fill the PrismEdgesCopy with BL distribution with correct directionality    
     // Grab the boundary layer points distributions.
     LibUtilities::PointsKey bkey(nl + 1,
                                     LibUtilities::eBoundaryLayerPoints, r);
@@ -1105,31 +1086,20 @@ void ProcessBL::BoundaryLayer3D()
         }
  
         // 2.2 Identify Edges to be split - only Prisms supported (Fill EdgesToSplit with the copy of the edges) 
-        if(el[i]->GetVertexCount()!=6)
+        if(el[i]->GetShapeType()!=7)
         {
-            m_log(FATAL) << "KK-This module is WIP and supports onyl prism elements at the moment. The Legacy ProcessBL supported Tets & Hexes as well. Check for pyramids in the mesh." << endl; 
+            m_log(FATAL) << "KK-This module is WIP and supports only prism elements at the moment. The Legacy ProcessBL supported Tets & Hexes as well. Check for pyramids in the mesh." << endl; 
         }
 
         Array<OneD, EdgeSharedPtr> EdgesToSplit(3) ;
-        // auto it = find(PrismEdgesCopyID.begin(), PrismEdgesCopyID.end(), el[i]->GetEdge(1)->m_id); 
-        // EdgesToSplit[0] =  PrismEdgesCopy[*it] ; // Here we are looking for the PrismEdgesCopy 
-        
-        // it = find(PrismEdgesCopyID.begin(), PrismEdgesCopyID.end(), el[i]->GetEdge(3)->m_id); 
-        // EdgesToSplit[1] =  PrismEdgesCopy[*it] ; 
-
-        // it = find(PrismEdgesCopyID.begin(), PrismEdgesCopyID.end(), el[i]->GetEdge(8)->m_id); 
-        // EdgesToSplit[2] =  PrismEdgesCopy[*it] ; 
-
         EdgesToSplit[0] = el[i]->GetEdge(1) ; 
         EdgesToSplit[1] = el[i]->GetEdge(3) ; 
         EdgesToSplit[2] = el[i]->GetEdge(8) ; 
 
 
         // 2.3 Identify the starting vertices/face in the BL 
-        //m_log(WARNING) << "This orientation might fail in cases, where both Triangular faces of the PRISM are boundary" << endl; 
         
         Array<OneD, NodeSharedPtr> SurfaceVertices(3) ; 
-        //if(el[i]->GetFace(3)->m_faceNodes.size()!=0)
         if(el[i]->GetFace(3)->m_elLink.size()==1 && el[i]->GetFace(1)->m_elLink.size()==2)
         {
             SurfaceVertices[0] = el[i]->GetFace(3)->m_vertexList[0] ; 
@@ -1269,16 +1239,8 @@ void ProcessBL::BoundaryLayer3D()
                 LocalFaceIDtoBoundaryEl_2D_MAP[j] = FaceIDtoEL2D[el_macro->GetFace(j)->m_id] ; 
            }
         }
-        //FaceIndex2D
-        //m_log(FATAL) <<  "Fix that " << endl ;  
 
         // 3.2. Create the expansion of the Macro Prism Element 
-        //m_log(WARNING) << "  el_macro->GetID() = " << el_macro->GetId() << endl ; 
-        // for(auto vertex: el_macro->GetVertexList())
-        // {
-        //     m_log(VERBOSE) << "VertexLoc NekMesh = " << vertex->GetLoc()[0] << " " << vertex->GetLoc()[1] << " " << vertex->GetLoc()[2] << " " << endl ; 
-        // }
-
         SpatialDomains::GeometrySharedPtr geom = el_macro->GetGeom(3);
         geom->FillGeom();
         
@@ -1290,26 +1252,13 @@ void ProcessBL::BoundaryLayer3D()
         Array<OneD, NekDouble> xc(xmap->GetTotPoints());
         Array<OneD, NekDouble> yc(xmap->GetTotPoints());
         Array<OneD, NekDouble> zc(xmap->GetTotPoints());
-        //geom->GetLocCoord();
-        //xmap->GetCoords()
-        //xmap->GetPoints()
-        // cout<< xmap->GetPoints(0).size() << "\n" ; 
-        // cout<< xmap->GetPoints(1).size() << "\n" ; 
-        // cout<< xmap->GetPoints(2).size() << "\n" ; 
 
         // Does Backwards transform from Std to Cartesian based on quadrature nodes
         xmap->BwdTrans(coeffs0, xc); // uses the expansion coeffs in STD to fill all Element nodes in Physical spaces 
         xmap->BwdTrans(coeffs1, yc);
         xmap->BwdTrans(coeffs2, zc);
 
-            // TBD 
-                    // cout <<"el_macro->GetVolumeNodes() =   "<<el_macro->GetVolumeNodes().size() << endl ; 
-                    // cout <<"el_macro->GetFaceCount() = " << el_macro->GetFaceCount() << endl ; 
-                    // cout <<"el_macro->GetFace(1)->GetNodeCount() = " << el_macro->GetFace(1)->GetNodeCount() << endl ; 
-                    // cout <<" el_macro->GetFace(1)->m_elLink.size() " << el_macro->GetFace(1)->m_elLink.size() <<endl ; 
-                    // cout << " el_macro->GetFace(3)->m_elLink.size() " <<  el_macro->GetFace(3)->m_elLink.size() <<endl ; 
-                    // cout << " el_macro->GetFace(2)->m_elLink.size() " <<  el_macro->GetFace(2)->m_elLink.size() <<endl ; 
-
+         
         // 3.3. Create Orientation Markers  
         int FaceOrient = 0 ; 
         Array<OneD, NodeSharedPtr> SurfaceVertices(3) ; 
@@ -1381,7 +1330,6 @@ void ProcessBL::BoundaryLayer3D()
         EdgeBL_8.insert(EdgeBL_8.begin(), EdgeCopy_8->m_n1);
         EdgeBL_8.push_back(EdgeCopy_8->m_n2);  
        
-        //m_log(WARNING) << "The orientation could be wrong - HalfSphere all Edges m_n2 is Surface Vertex ;" << endl ;  // if m_n1 closer to edgeNodes [1] - ok else loop the edgeNodes the other wa ; Always start from 
 
         // 3.5 Create HO Elements starting from m_n1  !!!         
         vector<NodeSharedPtr> NodeList(el_macro->GetVertexCount()) ; 
@@ -1432,8 +1380,8 @@ void ProcessBL::BoundaryLayer3D()
 
             for(int k = 1 ; k < nq-1 ; k++ )
             {
-                NekDouble tb = -1 ; 
-                NekDouble te = 1 ; 
+                NekDouble tb = -1.0 ; 
+                NekDouble te = 1.0 ; 
                 // EdgeNew_2 - assumer V2-V3 orientation 
                 if(EdgeNew_2->m_edgeNodes.size() != gll.size()-2) 
                 {
@@ -1639,64 +1587,17 @@ void ProcessBL::BoundaryLayer3D()
 
         }    
     
-        // 3.6 Delete the macro element 2D Boundary Faces and substitute them with new 
-        for(int k = 0 ; k < el_macro->GetFaceCount() ; k++)
-        {
-            FaceSharedPtr face = el_macro->GetFace(k) ; 
+        // // 3.6 Delete the macro element 2D Boundary Faces and substitute them with new 
+        // for(int k = 0 ; k < el_macro->GetFaceCount() ; k++)
+        // {
+        //     FaceSharedPtr face = el_macro->GetFace(k) ; 
             
-            // Avoid all internal faces 
-            if(face->m_elLink.size() != 1 ) 
-            {
-                continue ; 
-            }
-            
-            // find the element 2D layer
-            // m_log(VERBOSE) << "GetBoundaryLink "<<el[i]->GetBoundaryLink(j) << endl ; 
-            // m_log(VERBOSE) << "ELmacro ID  "<< el[i]->GetId() << endl ;
-            // m_log(VERBOSE) << "FaceID = " << el[i]->GetFace(j)->m_id << endl ; 
-            //FaceSharePtr  = ElMacroIDtoEl2D[el_macro->GetId()] ;   
-            
-            // allocated to the map 
-            //MacroIDtoBoundaryPtrMap[elId] = element[2]; 
-
-            // map<int, int>::iterator it;
-            // for (it = bLink.begin(); it != bLink.end(); ++it)
-            // {
-            //     int fid = it->first;
-            //     int bl  = it->second;
-
-            //     vector<NodeSharedPtr> qNodeList(4);
-            //     for (int k = 0; k < 4; ++k)
-            //     {
-            //         qNodeList[k] = nodeList[faceNodeMap[elType][fid][k]];
-            //     }
-            //     vector<int> tagBE;
-            //     tagBE =
-            //         m_mesh->m_element[m_mesh->m_expDim - 1][bl]->GetTagList();
-            //     ElmtConfig bconf(LibUtilities::eQuadrilateral, 1, false, false,
-            //                      false);
-            //     ElementSharedPtr boundaryElmt =
-            //         GetElementFactory().CreateInstance(
-            //             LibUtilities::eQuadrilateral, bconf, qNodeList, tagBE);
-
-            //     // Overwrite first layer boundary element with new
-            //     // boundary element, otherwise push this back to end of
-            //     // the boundary list
-            //     if (j == 0)
-            //     {
-            //         m_mesh->m_element[m_mesh->m_expDim - 1][bl] = boundaryElmt;
-            //     }
-            //     else
-            //     {
-            //         m_mesh->m_element[m_mesh->m_expDim - 1].push_back(
-            //             boundaryElmt);
-            //     }
-            // }
-
-    
-
-
-        }
+        //     // Avoid all internal faces 
+        //     if(face->m_elLink.size() != 1 ) 
+        //     {
+        //         continue ; 
+        //     }
+        // }
 
 
         
@@ -1707,71 +1608,17 @@ void ProcessBL::BoundaryLayer3D()
 
 
 
-    // 4. Create boundary elements - m_mesh->m_element[2]
-    
-    
-    // Loop over all element 
-    
-    // int cnt = 0 ; 
-    // for (auto elmt : m_mesh->m_element[m_mesh->m_expDim])
-    // {
-    //     // const int elId = el[i]->GetId();
-    //     // sIt            = splitEls.find(elId);
-              
-    //     //4. 1. Any elements that are not boundary prisms marked for splitting are ignored.
-    //     // if (sIt == splitEls.end())
-    //     // {
-    //     //     continue;
-    //     // }
-
-    //     //4.1 Check if boundary element - if so create element[2]
-    //     if(elmt->HasBoundaryLinks()==0)
-    //     {
-    //             continue ; 
-    //     }
-        
-    //     // 4.2
-    //     for(auto face : elmt->GetFaceList())
-    //     {
-
-    //         if(face->m_elLink.size()==1)
-    //         {
-    //             cnt++ ;  
-    //             cout << "cnt = " << cnt << endl  ;  
-
-
-    //         }
-
-
-
-    //     }
-        
-
-
-    // }  
-    
-
-
     //boost::ignore_unused(nodeId, rExprId, ratioIsString);
 
-    m_log(WARNING) << "m_mesh->m_element[3].size()= "<< m_mesh->m_element[3].size() << endl ; 
-    m_log(WARNING) <<  "m_mesh->m_element[2].size()= " <<m_mesh->m_element[2].size() << endl ;  
-    m_log(WARNING) <<  "m_mesh->m_face.size()= " <<m_mesh->m_faceSet.size() << endl ;  
-    m_log(WARNING) << "m_mesh->m_VertexList.size()= " << m_mesh->m_vertexSet.size() << endl ; 
+    m_log(VERBOSE) << "Elements after  = "<< m_mesh->m_element[3].size() << endl ; 
+    
     //ClearElementLinks();
     ProcessVertices();
-    m_log(VERBOSE) << "m_vertexSet.size() = " << m_mesh->m_vertexSet.size() << endl ; 
-
     ProcessEdges();
-    cout << "ProcessFaces start " << endl ; 
 
     ProcessFaces();
-    cout << "ProcessFaces done " << endl ; 
     ProcessElements();
-    cout << "ProcessElements done " << endl ; 
     ProcessComposites();
-    cout << "ProcessComposites done " << endl ; 
-    cout << "Start Output1 " << endl  ;
 }
 } // namespace NekMesh
 } // namespace Nektar
