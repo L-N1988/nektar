@@ -198,7 +198,9 @@ public:
 
     NEKMESH_EXPORT NekDouble Angle(NodeSharedPtr &a, NodeSharedPtr &b)
     {
-        Array<OneD, NekDouble> va(3), vb(3), cn(3);
+        std::array<NekDouble, 3> va ; 
+        std::array<NekDouble, 3> vb ; 
+        std::array<NekDouble, 3> cn ; 
         va[0] = a->m_x - m_x;
         va[1] = a->m_y - m_y;
         va[2] = a->m_z - m_z;
