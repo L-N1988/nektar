@@ -854,8 +854,8 @@ NekDouble EquationSystem::v_L2Error(unsigned int field,
     else
     {
         Array<OneD, NekDouble> errNorms(3);
-        errNorms   = ErrorExtraPoints(field);
-        L2error = errNorms[0];
+        errNorms = ErrorExtraPoints(field);
+        L2error  = errNorms[0];
     }
     return L2error;
 }
@@ -902,7 +902,7 @@ NekDouble EquationSystem::v_LinfError(unsigned int field,
     else
     {
         Array<OneD, NekDouble> errNorms(3);
-        errNorms     = ErrorExtraPoints(field);
+        errNorms  = ErrorExtraPoints(field);
         Linferror = errNorms[1];
     }
 
@@ -932,8 +932,7 @@ NekDouble EquationSystem::v_H1Error(unsigned int field,
 
         if (exactsoln.size())
         {
-            error =
-                m_fields[field]->H1(m_fields[field]->GetPhys(), exactsoln);
+            error = m_fields[field]->H1(m_fields[field]->GetPhys(), exactsoln);
         }
         else if (m_session->DefinesFunction("ExactSolution"))
         {
@@ -942,8 +941,7 @@ NekDouble EquationSystem::v_H1Error(unsigned int field,
             GetFunction("ExactSolution")
                 ->Evaluate(m_session->GetVariable(field), exactsoln, m_time);
 
-            error =
-                m_fields[field]->H1(m_fields[field]->GetPhys(), exactsoln);
+            error = m_fields[field]->H1(m_fields[field]->GetPhys(), exactsoln);
         }
         else
         {
@@ -955,18 +953,17 @@ NekDouble EquationSystem::v_H1Error(unsigned int field,
             Array<OneD, NekDouble> one(m_fields[field]->GetNpoints(), 1.0);
 
             NekDouble Vol = m_fields[field]->Integral(one);
-            error       = sqrt(error * error / Vol);
+            error         = sqrt(error * error / Vol);
         }
     }
     else
     {
         Array<OneD, NekDouble> errNorms(3);
-        errNorms   = ErrorExtraPoints(field);
-        error = errNorms[2];
+        errNorms = ErrorExtraPoints(field);
+        error    = errNorms[2];
     }
     return error;
 }
-
 
 /**
  * Compute the error in the L2-, Linf- and H1-norm for a larger number of
@@ -1047,7 +1044,8 @@ Array<OneD, NekDouble> EquationSystem::ErrorExtraPoints(unsigned int field)
 
     // Calcualte spectral/hp approximation on the quadrature points
     // of this new expansion basis
-    ErrorExplist->BwdTrans(m_fields[field]->GetCoeffs(), ErrorExplist->UpdatePhys());
+    ErrorExplist->BwdTrans(m_fields[field]->GetCoeffs(),
+                           ErrorExplist->UpdatePhys());
 
     errNorms[0] = ErrorExplist->L2(ErrorExplist->GetPhys(), ErrorSol);
     errNorms[1] = ErrorExplist->Linf(ErrorExplist->GetPhys(), ErrorSol);

@@ -145,7 +145,8 @@ void FilterError::v_Update(
 
         if (m_comm->GetRank() == 0)
         {
-            m_outFile << " " << vL2Error << " " << vLinfError << " " << vH1Error;
+            m_outFile << " " << vL2Error << " " << vLinfError << " "
+                      << vH1Error;
 
             if (m_consoleOutput)
             {
