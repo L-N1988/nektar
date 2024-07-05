@@ -66,7 +66,8 @@ FilterError::FilterError(const LibUtilities::SessionReaderSharedPtr &pSession,
         {
             std::string varName = equationSys->GetVariable(i);
             m_outFile << " " + varName + "_L2"
-                      << " " + varName + "_Linf";
+                      << " " + varName + "_Linf"
+                      << " " + varName + "_H1";
         }
 
         m_outFile << std::endl;
@@ -140,10 +141,11 @@ void FilterError::v_Update(
 
         NekDouble vL2Error   = equationSys->L2Error(i, exactsoln);
         NekDouble vLinfError = equationSys->LinfError(i, exactsoln);
+        NekDouble vH1Error   = equationSys->H1Error(i, exactsoln);
 
         if (m_comm->GetRank() == 0)
         {
-            m_outFile << " " << vL2Error << " " << vLinfError;
+            m_outFile << " " << vL2Error << " " << vLinfError << " " << vH1Error;
 
             if (m_consoleOutput)
             {
@@ -152,6 +154,9 @@ void FilterError::v_Update(
                           << std::endl;
                 std::cout << "L inf error (variable "
                           << equationSys->GetVariable(i) << ") : " << vLinfError
+                          << std::endl;
+                std::cout << "H 1 error (variable "
+                          << equationSys->GetVariable(i) << ") : " << vH1Error
                           << std::endl;
             }
         }
