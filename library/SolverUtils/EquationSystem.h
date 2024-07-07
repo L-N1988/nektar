@@ -225,8 +225,8 @@ public:
     /// Write out a session summary.
     SOLVER_UTILS_EXPORT void SessionSummary(SummaryList &vSummary);
 
-    SOLVER_UTILS_EXPORT inline Array<OneD, MultiRegions::ExpListSharedPtr>
-        &UpdateFields();
+    SOLVER_UTILS_EXPORT inline Array<OneD, MultiRegions::ExpListSharedPtr> &
+    UpdateFields();
 
     /// Get hold of FieldInfoMap so it can be updated
     SOLVER_UTILS_EXPORT inline LibUtilities::FieldMetaDataMap &
@@ -710,8 +710,8 @@ inline bool EquationSystem::NegatedOp(void)
     return v_NegatedOp();
 }
 
-inline Array<OneD, MultiRegions::ExpListSharedPtr>
-    &EquationSystem::UpdateFields(void)
+inline Array<OneD, MultiRegions::ExpListSharedPtr> &EquationSystem::
+    UpdateFields(void)
 {
     return m_fields;
 }
