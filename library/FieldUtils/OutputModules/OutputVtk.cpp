@@ -648,8 +648,8 @@ std::vector<long long> hexTensorNodeOrdering(
                            {n * n * n - 1, -1},
                            {n * n * (n - 1) + n * (n - 1), -n}};
     int hexFaces[6][3]  = {{0, 1, n},         {0, 1, n * n},
-                          {n - 1, n, n * n}, {n * (n - 1), 1, n * n},
-                          {0, n, n * n},     {n * n * (n - 1), 1, n}};
+                           {n - 1, n, n * n}, {n * (n - 1), 1, n * n},
+                           {0, n, n * n},     {n * n * (n - 1), 1, n}};
 
     int gmshToNekEdge[12] = {0, 1, -2, -3, 8, 9, -10, -11, 4, 5, 6, 7};
 
@@ -1013,7 +1013,10 @@ void OutputVtk::AddFieldDataToVTKLowOrder(
         vtkMesh->GetPointData()->AddArray(fieldData.GetPointer());
     }
 
-    WriteVTK(vtkMesh, filename, vm);
+    if (!m_prohibitWrite)
+    {
+        WriteVTK(vtkMesh, filename, vm);
+    }
 }
 
 void OutputVtk::OutputFromExpLowOrderMultiBlock(po::variables_map &vm,
@@ -1292,7 +1295,10 @@ void OutputVtk::OutputFromExpLowOrderMultiBlock(po::variables_map &vm,
                                             "Other composites");
     }
 
-    WriteVTK(mainBlock.GetPointer(), filename, vm);
+    if (!m_prohibitWrite)
+    {
+        WriteVTK(mainBlock.GetPointer(), filename, vm);
+    }
 }
 
 vtkSmartPointer<vtkUnstructuredGrid> OutputVtk::OutputFromExpHighOrder(
@@ -1452,7 +1458,10 @@ void OutputVtk::AddFieldDataToVTKHighOrder(
         vtkMesh->GetPointData()->AddArray(fieldData.GetPointer());
     }
 
-    WriteVTK(vtkMesh, filename, vm);
+    if (!m_prohibitWrite)
+    {
+        WriteVTK(vtkMesh, filename, vm);
+    }
 }
 
 void OutputVtk::WriteVTK(vtkDataObject *vtkMesh, std::string &filename,
@@ -1603,6 +1612,21 @@ void OutputVtk::v_OutputFromPts(po::variables_map &vm)
 
 void OutputVtk::v_OutputFromExp(po::variables_map &vm)
 {
+    // Move geometry based on zones data in .xml and time in .fld metadatamap
+    // Perform movement of zones based on time in field files metadata map
+    if (m_f->m_graph->GetMovement()->GetMoveFlag())
+    {
+        if (!m_f->m_fieldMetaDataMap["Time"].empty())
+        {
+            m_f->m_graph->GetMovement()->PerformMovement(
+                std::stod(m_f->m_fieldMetaDataMap["Time"]));
+            for (auto &i : m_f->m_exp)
+            {
+                i->Reset();
+            }
+        }
+    }
+
     if (m_config["legacy"].m_beenSet)
     {
         ASSERTL0(!m_config["multiblock"].m_beenSet,
@@ -1616,12 +1640,20 @@ void OutputVtk::v_OutputFromExp(po::variables_map &vm)
         return;
     }
 
+    std::string filename;
+
     // Extract the output filename and extension
-    std::string filename = OutputVtkBase::PrepareOutput(vm);
+    if (!m_prohibitWrite)
+    {
+        filename = OutputVtkBase::PrepareOutput(vm);
+    }
 
     // Save mesh state (if using filter this allows us to only ProcessEquispaced
     // if needed)
-    m_cachedMesh = m_vtkMesh;
+    if (!m_f->m_graph->GetMovement()->GetMoveFlag())
+    {
+        m_cachedMesh = m_vtkMesh;
+    }
 
     if (m_config["highorder"].m_beenSet)
     {

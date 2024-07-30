@@ -56,7 +56,7 @@
 
 #include <LibUtilities/Memory/NekMemoryManager.hpp>
 #include <MultiRegions/ContField.h>
-#include <SpatialDomains/MeshGraph.h>
+#include <SpatialDomains/MeshGraphIO.h>
 
 #include <SolverUtils/SolverUtilsDeclspec.h>
 
@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
     LibUtilities::SessionReaderSharedPtr vSession =
         LibUtilities::SessionReader::CreateInstance(argc, argv);
     SpatialDomains::MeshGraphSharedPtr graphShPt =
-        SpatialDomains::MeshGraph::Read(vSession);
+        SpatialDomains::MeshGraphIO::Read(vSession);
 
     fname = vSession->GetSessionName() + ".cfs";
 
@@ -242,6 +242,18 @@ int main(int argc, char *argv[])
         pFields[i] =
             MemoryManager<MultiRegions::DisContField>::AllocateSharedPtr(
                 vSession, graphShPt, vSession->GetVariable(i));
+    }
+
+    //@TODO: Might need this to rotate mesh based on time
+    for (auto &fld : pFields)
+    {
+        if (fld->GetGraph()->GetMovement() != nullptr)
+        {
+            fld->GetGraph()->GetMovement()->PerformMovement(
+                std::stod(fieldMetaDataMap["Time"]));
+            fld->Reset();
+            fld->SetUpPhysNormals();
+        }
     }
 
     MultiRegions::ExpListSharedPtr Exp2D;

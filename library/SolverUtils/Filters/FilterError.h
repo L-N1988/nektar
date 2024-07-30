@@ -47,7 +47,7 @@ public:
     /// Creates an instance of this class
     static FilterSharedPtr create(
         const LibUtilities::SessionReaderSharedPtr &pSession,
-        const std::weak_ptr<EquationSystem> &pEquation,
+        const std::shared_ptr<EquationSystem> &pEquation,
         const std::map<std::string, std::string> &pParams)
     {
         FilterSharedPtr p = MemoryManager<FilterError>::AllocateSharedPtr(
@@ -60,7 +60,7 @@ public:
 
     SOLVER_UTILS_EXPORT FilterError(
         const LibUtilities::SessionReaderSharedPtr &pSession,
-        const std::weak_ptr<EquationSystem> &pEquation,
+        const std::shared_ptr<EquationSystem> &pEquation,
         const ParamMap &pParams);
     SOLVER_UTILS_EXPORT ~FilterError() override = default;
 
@@ -79,6 +79,7 @@ protected:
 private:
     size_t m_index = 0;
     size_t m_outputFrequency;
+    bool m_consoleOutput;
     size_t m_numVariables;
     bool m_homogeneous;
     std::ofstream m_outFile;

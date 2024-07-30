@@ -65,9 +65,6 @@ protected:
     /// Global to universal unique map
     Array<OneD, int> m_map;
 
-    /// Tolerance of iterative solver.
-    NekDouble m_tolerance;
-
     /// dot product of rhs to normalise stopping criterion
     NekDouble m_rhs_magnitude;
 
@@ -113,9 +110,7 @@ protected:
     void DoProjection(const int pNumRows,
                       const Array<OneD, const NekDouble> &pInput,
                       Array<OneD, NekDouble> &pOutput, const int pNumDir,
-                      const NekDouble tol, const bool isAconjugate);
-
-    void Set_Rhs_Magnitude(const NekVector<NekDouble> &pIn);
+                      const bool isAconjugate);
 
     virtual void v_UniqueMap() = 0;
 

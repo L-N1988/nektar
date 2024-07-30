@@ -62,8 +62,8 @@ using LibUtilities::eTriangle;
 class PhysInterp1DScaled_Helper : virtual public Operator
 {
 public:
-    void CheckFactors(StdRegions::FactorMap factors,
-                      [[maybe_unused]] int coll_phys_offset) override
+    void UpdateFactors(StdRegions::FactorMap factors) override
+
     {
         if (factors == m_factors)
         {
@@ -142,8 +142,7 @@ public:
         ASSERTL0(false, "Not valid for this operator.");
     }
 
-    void CheckFactors(StdRegions::FactorMap factors,
-                      [[maybe_unused]] int coll_phys_offset) override
+    void UpdateFactors(StdRegions::FactorMap factors) override
     {
         if (factors == m_factors)
         {
@@ -183,7 +182,7 @@ private:
  */
 
 class PhysInterp1DScaled_MatrixFree final : virtual public Operator,
-                                            MatrixFreeOneInOneOut,
+                                            MatrixFreeBase,
                                             PhysInterp1DScaled_Helper
 {
 public:
@@ -199,19 +198,7 @@ public:
                     [[maybe_unused]] Array<OneD, NekDouble> &output2,
                     [[maybe_unused]] Array<OneD, NekDouble> &wsp) final
     {
-        if (m_isPadded)
-        {
-            // copy into padded vector
-            Vmath::Vcopy(m_nIn, input, 1, m_input, 1);
-            // call op
-            (*m_oper)(m_input, m_output);
-            // copy out of padded vector
-            Vmath::Vcopy(m_nOut, m_output, 1, output0, 1);
-        }
-        else
-        {
-            (*m_oper)(input, output0);
-        }
+        (*m_oper)(input, output0);
     }
 
     void operator()([[maybe_unused]] int dir,
@@ -223,22 +210,21 @@ public:
                  "BwdTrans_MatrixFree: Not valid for this operator.");
     }
 
-    void CheckFactors([[maybe_unused]] StdRegions::FactorMap factors,
-                      [[maybe_unused]] int coll_phys_offset) override
+    void UpdateFactors([[maybe_unused]] StdRegions::FactorMap factors) override
     {
         ASSERTL0(false, "Not valid for this operator.");
     }
 
 private:
-    std::shared_ptr<MatrixFree::PhysInterp1DScaled> m_oper;
+    std::shared_ptr<MatrixFree::BwdTrans> m_oper;
 
     PhysInterp1DScaled_MatrixFree(
         vector<StdRegions::StdExpansionSharedPtr> pCollExp,
         CoalescedGeomDataSharedPtr pGeomData, StdRegions::FactorMap factors)
         : Operator(pCollExp, pGeomData, factors),
-          MatrixFreeOneInOneOut(pCollExp[0]->GetStdExp()->GetNcoeffs(),
-                                pCollExp[0]->GetStdExp()->GetTotPoints(),
-                                pCollExp.size()),
+          MatrixFreeBase(pCollExp[0]->GetStdExp()->GetNcoeffs(),
+                         pCollExp[0]->GetStdExp()->GetTotPoints(),
+                         pCollExp.size()),
           PhysInterp1DScaled_Helper()
     {
         // Basis vector.
@@ -253,13 +239,12 @@ private:
         auto shapeType = pCollExp[0]->GetStdExp()->DetShapeType();
 
         // Generate operator string and create operator.
-        std::string op_string = "PhysInterp1DScaled";
+        std::string op_string = "BwdTrans";
         op_string += MatrixFree::GetOpstring(shapeType, false);
         auto oper = MatrixFree::GetOperatorFactory().CreateInstance(
-            op_string, basis, m_nElmtPad);
+            op_string, basis, pCollExp.size());
 
-        m_oper =
-            std::dynamic_pointer_cast<MatrixFree::PhysInterp1DScaled>(oper);
+        m_oper = std::dynamic_pointer_cast<MatrixFree::BwdTrans>(oper);
         ASSERTL0(m_oper, "Failed to cast pointer.");
     }
 };
@@ -302,8 +287,7 @@ public:
         ASSERTL0(false, "Not valid for this operator.");
     }
 
-    void CheckFactors([[maybe_unused]] StdRegions::FactorMap factors,
-                      [[maybe_unused]] int coll_phys_offset) override
+    void UpdateFactors([[maybe_unused]] StdRegions::FactorMap factors) override
     {
         m_factors = factors;
     }
@@ -493,10 +477,9 @@ public:
         ASSERTL0(false, "Not valid for this operator.");
     }
 
-    void CheckFactors([[maybe_unused]] StdRegions::FactorMap factors,
-                      [[maybe_unused]] int coll_phys_offset) override
+    void UpdateFactors([[maybe_unused]] StdRegions::FactorMap factors) override
     {
-        PhysInterp1DScaled_Helper::CheckFactors(factors, coll_phys_offset);
+        PhysInterp1DScaled_Helper::UpdateFactors(factors);
         m_factors = factors;
     }
 

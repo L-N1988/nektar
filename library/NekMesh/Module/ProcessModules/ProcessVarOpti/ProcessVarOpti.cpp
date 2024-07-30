@@ -100,6 +100,12 @@ ProcessVarOpti::ProcessVarOpti(MeshSharedPtr m) : ProcessModule(m)
         ConfigOption(false, "", "basic analytics module");
     m_config["scalingfile"] =
         ConfigOption(false, "", "Read scaling field from file for r-adaptation");
+    m_config["radaptscale"] =
+        ConfigOption(false, "0", "Maps scaling for curve-based r-adaption");
+    m_config["radaptrad"] =
+        ConfigOption(false, "0", "Radius of influence for curve-based r-adaption");
+    m_config["radaptcurves"] =
+        ConfigOption(false, "", "Array of curves to use for adaption");
     // clang-format on
 }
 
@@ -226,11 +232,30 @@ void ProcessVarOpti::Process()
 
             int optiKind = m_mesh->m_spaceDim;
 
-            if (freenodes[i][j]->GetNumCadCurve() == 1)
+            if (freenodes[i][j]->GetNumCadCurve())
             {
-                optiKind += 10;
+                // ensures CAD vertices are removed from optimisation and not
+                // allowed to move.
+                [&] { // in a lambda function to avoid checking multiple curves
+                      // if node is already identified as a vertex.
+                    for (auto &curve : freenodes[i][j]->GetCADCurves())
+                    {
+                        for (auto &vert : curve->GetVertex())
+                        {
+                            if (freenodes[i][j] == vert->GetNode())
+                            {
+                                // node is a vertex of the CAD curve and should
+                                // not be optimised.
+                                optiKind = 0;
+                                return;
+                            }
+                        }
+                    }
+                    optiKind += 10; // if the lambda function hasn't returned
+                                    // then node is not a vertex.
+                }();
             }
-            else if (freenodes[i][j]->GetNumCADSurf() == 1)
+            else if (freenodes[i][j]->GetNumCADSurf())
             {
                 optiKind += 20;
             }
@@ -243,9 +268,12 @@ void ProcessVarOpti::Process()
             ASSERTL0(c == check.end(), "duplicate node");
             check.insert(freenodes[i][j]->m_id);
 
-            ns.push_back(GetNodeOptiFactory().CreateInstance(
-                optiKind, freenodes[i][j], it->second, m_res, derivUtils,
-                m_opti));
+            if (optiKind)
+            {
+                ns.push_back(GetNodeOptiFactory().CreateInstance(
+                    optiKind, freenodes[i][j], it->second, m_res, derivUtils,
+                    m_opti));
+            }
         }
         optiNodes.push_back(ns);
     }
@@ -355,12 +383,23 @@ void ProcessVarOpti::Process()
         m_res->startInv = 0;
         m_res->worstJac = numeric_limits<double>::max();
 
-        bool update = m_config["scalingfile"].beenSet && (ctr % subIter) == 0;
+        bool updateCAD = (m_radaptCAD && (ctr % subIter) == 0);
+        bool updateFile =
+            ((m_config["scalingfile"].beenSet) && (ctr % subIter) == 0);
 
         vector<Thread::ThreadJob *> elJobs(m_dataSet.size());
         for (int i = 0; i < m_dataSet.size(); i++)
         {
-            elJobs[i] = m_dataSet[i]->GetJob(update);
+            if (updateCAD)
+            {
+                elJobs[i] = m_dataSet[i]->GetAdaptJob(
+                    m_adaptCurves, m_config["radaptscale"].as<NekDouble>(),
+                    m_config["radaptrad"].as<NekDouble>());
+            }
+            else
+            {
+                elJobs[i] = m_dataSet[i]->GetJob(updateFile);
+            }
         }
 
         tm->SetNumWorkers(0);
@@ -387,7 +426,7 @@ void ProcessVarOpti::Process()
             break;
         }
 
-        if (update)
+        if (updateFile || updateCAD)
         {
             m_log(VERBOSE) << "    => Mapping updated!" << endl;
         }

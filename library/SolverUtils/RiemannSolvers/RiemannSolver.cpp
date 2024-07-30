@@ -131,8 +131,28 @@ void RiemannSolver::Solve(const int nDim,
 
         rotateToNormal(Fwd, normals, vecLocs, m_rotStorage[0]);
         rotateToNormal(Bwd, normals, vecLocs, m_rotStorage[1]);
+
         v_Solve(nDim, m_rotStorage[0], m_rotStorage[1], m_rotStorage[2]);
         rotateFromNormal(m_rotStorage[2], normals, vecLocs, flux);
+
+        // Attempt to subtract (\vec{U}\vec{vg})\dot n for ALE
+        if (m_ALESolver)
+        {
+            auto vgt = m_vectors["vgt"]();
+            auto N   = m_vectors["N"]();
+            for (int i = 0; i < flux.size(); ++i)
+            {
+                for (int j = 0; j < flux[i].size(); ++j)
+                {
+                    NekDouble tmp = 0;
+                    for (int k = 0; k < nDim; ++k)
+                    {
+                        tmp += N[k][j] * vgt[k][j];
+                    }
+                    flux[i][j] -= 0.5 * (Fwd[i][j] + Bwd[i][j]) * tmp;
+                }
+            }
+        }
     }
     else
     {

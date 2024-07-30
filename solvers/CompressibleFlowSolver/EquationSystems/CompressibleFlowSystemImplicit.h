@@ -37,6 +37,9 @@
 #define NEKTAR_SOLVERS_COMPRESSIBLEFLOWSOLVER_COMPRESSIBLEFLOWSYSTEMIMPLICIT_H
 
 #include <CompressibleFlowSolver/EquationSystems/CompressibleFlowSystem.h>
+#include <CompressibleFlowSolver/Preconditioner/PreconCfs.h>
+#include <CompressibleFlowSolver/Preconditioner/PreconCfsOp.h>
+#include <LibUtilities/LinearAlgebra/NekNonlinSysIter.h>
 
 namespace Nektar
 {
@@ -74,12 +77,11 @@ protected:
     NekDouble m_TimeIntegLambda = 0.0;
     NekDouble m_inArrayNorm     = -1.0;
     NekDouble m_jacobiFreeEps;
-    NekDouble m_newtonRelativeIteTol;
 
     TensorOfArray4D<NekSingle> m_stdSMatDataDBB;
     TensorOfArray5D<NekSingle> m_stdSMatDataDBDB;
 
-    LibUtilities::NekNonlinSysSharedPtr m_nonlinsol;
+    LibUtilities::NekNonlinSysIterSharedPtr m_nonlinsol;
 
     PreconCfsSharedPtr m_preconCfs;
 
@@ -99,13 +101,17 @@ protected:
 
     void v_PrintSummaryStatistics(const NekDouble intTime) override;
 
+    void v_ALEInitObject(
+        int spaceDim,
+        Array<OneD, MultiRegions::ExpListSharedPtr> &fields) override;
+
     void NonlinSysEvaluatorCoeff1D(const Array<OneD, const NekDouble> &inarray,
                                    Array<OneD, NekDouble> &out,
-                                   const bool &flag = true);
+                                   const bool &flag);
 
     void NonlinSysEvaluatorCoeff(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &out);
+        Array<OneD, Array<OneD, NekDouble>> &out, const bool &flag);
 
     void DoOdeImplicitRhs(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
@@ -140,7 +146,7 @@ protected:
 
     void MatrixMultiplyMatrixFreeCoeff(
         const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &out, const bool &flag = false);
+        Array<OneD, NekDouble> &out, const bool &centralDifferenceFlag);
 
     void CalcRefValues(const Array<OneD, const NekDouble> &inarray);
 

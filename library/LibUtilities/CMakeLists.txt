@@ -209,8 +209,8 @@ SET(LinearAlgebraHeaders
 ./LinearAlgebra/NekLinSysIterGMRESLoc.h
 ./LinearAlgebra/NekMatrixFwd.hpp
 ./LinearAlgebra/NekMatrix.hpp
-./LinearAlgebra/NekNonlinSys.h
-./LinearAlgebra/NekNonlinSysNewton.h
+./LinearAlgebra/NekNonlinSysIter.h
+./LinearAlgebra/NekNonlinSysIterNewton.h
 ./LinearAlgebra/NekPoint.hpp
 ./LinearAlgebra/NekSys.h
 ./LinearAlgebra/NekTypeDefs.hpp
@@ -229,7 +229,7 @@ SET(LinearAlgebraHeaders
 )
 
 SET(LinearAlgebraSources
-./LinearAlgebra/blas.cpp
+./LinearAlgebra/Blas.cpp
 ./LinearAlgebra/BlockMatrix.cpp
 ./LinearAlgebra/MatrixBase.cpp
 ./LinearAlgebra/MatrixFuncs.cpp
@@ -241,8 +241,8 @@ SET(LinearAlgebraSources
 ./LinearAlgebra/NekLinSysIterCG.cpp
 ./LinearAlgebra/NekLinSysIterCGLoc.cpp
 ./LinearAlgebra/NekLinSysIterFixedpointJacobi.cpp
-./LinearAlgebra/NekNonlinSys.cpp
-./LinearAlgebra/NekNonlinSysNewton.cpp
+./LinearAlgebra/NekNonlinSysIter.cpp
+./LinearAlgebra/NekNonlinSysIterNewton.cpp
 ./LinearAlgebra/NekSys.cpp
 ./LinearAlgebra/NekVector.cpp
 ./LinearAlgebra/ScaledMatrix.cpp
@@ -460,7 +460,7 @@ ENDIF()
 IF( NEKTAR_USE_PETSC )
     TARGET_LINK_LIBRARIES(LibUtilities LINK_PRIVATE ${PETSC_LIBRARIES})
     TARGET_LINK_LIBRARIES(LibUtilities LINK_PUBLIC ${CMAKE_DL_LIBS})
-    ADD_DEPENDENCIES(LibUtilities petsc-3.11.4)
+    ADD_DEPENDENCIES(LibUtilities petsc-3.19.3)
 ENDIF( NEKTAR_USE_PETSC )
 
 IF (NEKTAR_BUILD_PYTHON)

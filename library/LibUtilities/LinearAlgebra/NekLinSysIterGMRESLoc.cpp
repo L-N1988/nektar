@@ -62,11 +62,11 @@ NekLinSysIterGMRESLoc::NekLinSysIterGMRESLoc(
 
     m_KrylovMaxHessMatBand = pKey.m_KrylovMaxHessMatBand;
 
-    m_maxrestart = ceil(NekDouble(m_maxiter) / NekDouble(m_LinSysMaxStorage));
-    m_LinSysMaxStorage = min(m_maxiter, m_LinSysMaxStorage);
+    m_maxrestart       = ceil(NekDouble(m_NekLinSysMaxIterations) /
+                              NekDouble(pKey.m_LinSysMaxStorage));
+    m_LinSysMaxStorage = min(m_NekLinSysMaxIterations, pKey.m_LinSysMaxStorage);
 
-    m_DifferenceFlag0 = pKey.m_DifferenceFlag0;
-    m_DifferenceFlag1 = pKey.m_DifferenceFlag1;
+    m_GMRESCentralDifference = pKey.m_GMRESCentralDifference;
 
     m_isLocal = true;
 
@@ -97,10 +97,8 @@ void NekLinSysIterGMRESLoc::v_InitObject()
  */
 int NekLinSysIterGMRESLoc::v_SolveSystem(
     const int nLocal, const Array<OneD, const NekDouble> &pInput,
-    Array<OneD, NekDouble> &pOutput, [[maybe_unused]] const int nDir,
-    const NekDouble tol, [[maybe_unused]] const NekDouble factor)
+    Array<OneD, NekDouble> &pOutput, [[maybe_unused]] const int nDir)
 {
-    m_tolerance     = max(tol, 1.0E-15);
     int niterations = DoGMRES(nLocal, pInput, pOutput);
 
     return niterations;
@@ -159,12 +157,12 @@ int NekLinSysIterGMRESLoc::DoGMRES(const int nLocal,
         Array<OneD, NekDouble> wk(nLocal);
 
         // calculate difference in residual of solution
-        m_operator.DoNekSysLhsEval(pOutput, r0, m_DifferenceFlag0);
+        m_operator.DoNekSysLhsEval(pOutput, r0, m_GMRESCentralDifference);
 
         // Note this is finding the difference between the whole
         // residual not jsut the non-Dirichlet values.
         // Probably OK since just an monitoring output?
-        Vmath::Svtvp(nLocal, -1.0, r0, 1, pInput, 1, r0, 1);
+        Vmath::Vsub(nLocal, pInput, 1, r0, 1, r0, 1);
 
         m_operator.DoAssembleLoc(r0, wk, true);
         NekDouble vExchange = Vmath::Dot(nLocal, wk, r0);
@@ -179,7 +177,7 @@ int NekLinSysIterGMRESLoc::DoGMRES(const int nLocal,
             cout << std::scientific << std::setw(nwidthcolm)
                  << std::setprecision(nwidthcolm - 8)
                  << "       GMRES iterations made = " << m_totalIterations
-                 << " using tolerance of " << m_tolerance
+                 << " using tolerance of " << m_NekLinSysTolerance
                  << " (error = " << sqrt(eps * m_prec_factor / m_rhs_magnitude)
                  << ")";
 
@@ -241,7 +239,7 @@ NekDouble NekLinSysIterGMRESLoc::DoGmresRestart(
     if (restarted)
     {
         // This is A*x
-        m_operator.DoNekSysLhsEval(pOutput, r0, m_DifferenceFlag0);
+        m_operator.DoNekSysLhsEval(pOutput, r0, m_GMRESCentralDifference);
 
         // The first search direction
         beta = -1.0;
@@ -368,8 +366,8 @@ NekDouble NekLinSysIterGMRESLoc::DoGmresRestart(
         // the last term of eta is not residual
         if ((!truncted) || (nd < m_KrylovMaxHessMatBand))
         {
-            if ((eps <
-                 m_tolerance * m_tolerance * m_rhs_magnitude)) //&& nd > 0)
+            if ((eps < m_NekLinSysTolerance * m_NekLinSysTolerance *
+                           m_rhs_magnitude)) //&& nd > 0)
             {
                 m_converged = true;
             }
@@ -416,7 +414,7 @@ void NekLinSysIterGMRESLoc::DoArnoldi(const int starttem, const int endtem,
     NekDouble alpha, beta, vExchange = 0.0;
     LibUtilities::Timer timer;
     timer.Start();
-    m_operator.DoNekSysLhsEval(V1, w, m_DifferenceFlag1);
+    m_operator.DoNekSysLhsEval(V1, w, m_GMRESCentralDifference);
     timer.Stop();
     timer.AccumulateRegion("NekSysOperators::DoNekSysLhsEval", 10);
 

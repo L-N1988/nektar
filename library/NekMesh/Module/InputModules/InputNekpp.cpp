@@ -38,7 +38,7 @@ using namespace std;
 
 #include "InputNekpp.h"
 #include <NekMesh/MeshElements/Element.h>
-#include <SpatialDomains/MeshGraph.h>
+#include <SpatialDomains/MeshGraphIO.h>
 
 namespace Nektar::NekMesh
 {
@@ -72,11 +72,14 @@ void InputNekpp::Process()
     m_log(VERBOSE) << "Reading Nektar++ XML file '" << filename[0] << "'"
                    << endl;
 
+    LibUtilities::CommSharedPtr pComm =
+        m_mesh->m_comm ? m_mesh->m_comm : LibUtilities::CommSharedPtr();
+
     char *prgname = const_cast<char *>("NekMesh");
     LibUtilities::SessionReaderSharedPtr pSession =
         LibUtilities::SessionReader::CreateInstance(1, &prgname, filename);
     SpatialDomains::MeshGraphSharedPtr graph =
-        SpatialDomains::MeshGraph::Read(pSession);
+        SpatialDomains::MeshGraphIO::Read(pSession);
 
     auto comm = pSession->GetComm();
     if (comm->GetType().find("MPI") != std::string::npos)

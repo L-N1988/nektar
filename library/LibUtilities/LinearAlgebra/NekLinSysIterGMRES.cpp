@@ -60,11 +60,11 @@ NekLinSysIterGMRES::NekLinSysIterGMRES(
 
     m_KrylovMaxHessMatBand = pKey.m_KrylovMaxHessMatBand;
 
-    m_maxrestart = ceil(NekDouble(m_maxiter) / NekDouble(m_LinSysMaxStorage));
-    m_LinSysMaxStorage = min(m_maxiter, m_LinSysMaxStorage);
+    m_maxrestart       = ceil(NekDouble(m_NekLinSysMaxIterations) /
+                              NekDouble(pKey.m_LinSysMaxStorage));
+    m_LinSysMaxStorage = min(m_NekLinSysMaxIterations, pKey.m_LinSysMaxStorage);
 
-    m_DifferenceFlag0 = pKey.m_DifferenceFlag0;
-    m_DifferenceFlag1 = pKey.m_DifferenceFlag1;
+    m_GMRESCentralDifference = pKey.m_GMRESCentralDifference;
 
     // Allocate array storage of coefficients
     // Hessenburg matrix
@@ -93,10 +93,8 @@ void NekLinSysIterGMRES::v_InitObject()
  */
 int NekLinSysIterGMRES::v_SolveSystem(
     const int nGlobal, const Array<OneD, const NekDouble> &pInput,
-    Array<OneD, NekDouble> &pOutput, const int nDir, const NekDouble tol,
-    [[maybe_unused]] const NekDouble factor)
+    Array<OneD, NekDouble> &pOutput, const int nDir)
 {
-    m_tolerance     = max(tol, 1.0E-15);
     int niterations = DoGMRES(nGlobal, pInput, pOutput, nDir);
 
     return niterations;
@@ -161,9 +159,9 @@ int NekLinSysIterGMRES::DoGMRES(const int nGlobal,
     if (m_verbose)
     {
         Array<OneD, NekDouble> r0(nGlobal, 0.0);
-        m_operator.DoNekSysLhsEval(pOutput, r0, m_DifferenceFlag0);
-        Vmath::Svtvp(nNonDir, -1.0, &r0[0] + nDir, 1, &pInput[0] + nDir, 1,
-                     &r0[0] + nDir, 1);
+        m_operator.DoNekSysLhsEval(pOutput, r0, m_GMRESCentralDifference);
+        Vmath::Vsub(nNonDir, &pInput[0] + nDir, 1, &r0[0] + nDir, 1,
+                    &r0[0] + nDir, 1);
         NekDouble vExchange = Vmath::Dot2(nNonDir, &r0[0] + nDir, &r0[0] + nDir,
                                           &m_map[0] + nDir);
         m_rowComm->AllReduce(vExchange, LibUtilities::ReduceSum);
@@ -176,7 +174,7 @@ int NekLinSysIterGMRES::DoGMRES(const int nGlobal,
             cout << std::scientific << std::setw(nwidthcolm)
                  << std::setprecision(nwidthcolm - 8)
                  << "       GMRES iterations made = " << m_totalIterations
-                 << " using tolerance of " << m_tolerance
+                 << " using tolerance of " << m_NekLinSysTolerance
                  << " (error = " << sqrt(eps * m_prec_factor / m_rhs_magnitude)
                  << ")";
 
@@ -242,7 +240,7 @@ NekDouble NekLinSysIterGMRES::DoGmresRestart(
     if (restarted)
     {
         // This is A*x
-        m_operator.DoNekSysLhsEval(pOutput, r0, m_DifferenceFlag0);
+        m_operator.DoNekSysLhsEval(pOutput, r0, m_GMRESCentralDifference);
 
         // The first search direction
         beta = -1.0;
@@ -271,7 +269,7 @@ NekDouble NekLinSysIterGMRES::DoGmresRestart(
 
     // Detect zero input array
     // Causes Arnoldi to breakdown, hence stop here
-    if (eps < m_tolerance * m_tolerance * m_rhs_magnitude)
+    if (eps < m_NekLinSysTolerance * m_NekLinSysTolerance * m_rhs_magnitude)
     {
         m_converged = true;
         if (m_prec_factor == NekConstants::kNekUnsetDouble)
@@ -381,7 +379,9 @@ NekDouble NekLinSysIterGMRES::DoGmresRestart(
         // the last term of eta is not residual
         if ((!truncted) || (nd < m_KrylovMaxHessMatBand))
         {
-            if ((eps < m_tolerance * m_tolerance * m_rhs_magnitude) && nd > 0)
+            if ((eps < m_NekLinSysTolerance * m_NekLinSysTolerance *
+                           m_rhs_magnitude) &&
+                nd > 0)
             {
                 m_converged = true;
             }
@@ -433,7 +433,7 @@ void NekLinSysIterGMRES::DoArnoldi(const int starttem, const int endtem,
     int nNonDir = nGlobal - nDir;
     LibUtilities::Timer timer;
     timer.Start();
-    m_operator.DoNekSysLhsEval(Vsingle1, w, m_DifferenceFlag1);
+    m_operator.DoNekSysLhsEval(Vsingle1, w, m_GMRESCentralDifference);
     timer.Stop();
     timer.AccumulateRegion("NekSysOperators::DoNekSysLhsEval", 10);
 

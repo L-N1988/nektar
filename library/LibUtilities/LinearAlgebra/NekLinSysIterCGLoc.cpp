@@ -68,11 +68,8 @@ void NekLinSysIterCGLoc::v_InitObject()
  */
 int NekLinSysIterCGLoc::v_SolveSystem(
     const int nLocal, const Array<OneD, const NekDouble> &pInput,
-    Array<OneD, NekDouble> &pOutput, [[maybe_unused]] const int nDir,
-    const NekDouble tol, [[maybe_unused]] const NekDouble factor)
+    Array<OneD, NekDouble> &pOutput, [[maybe_unused]] const int nDir)
 {
-    m_tolerance = max(tol, 1.0E-16);
-
     DoConjugateGradient(nLocal, pInput, pOutput);
 
     return m_totalIterations;
@@ -135,12 +132,12 @@ void NekLinSysIterCGLoc::DoConjugateGradient(
     m_totalIterations = 0;
 
     // If input residual is less than tolerance skip solve.
-    if (eps < m_tolerance * m_tolerance * m_rhs_magnitude)
+    if (eps < m_NekLinSysTolerance * m_NekLinSysTolerance * m_rhs_magnitude)
     {
         if (m_verbose && m_root)
         {
             cout << "CG iterations made = " << m_totalIterations
-                 << " using tolerance of " << m_tolerance
+                 << " using tolerance of " << m_NekLinSysTolerance
                  << " (error = " << sqrt(eps / m_rhs_magnitude)
                  << ", rhs_mag = " << sqrt(m_rhs_magnitude) << ")" << endl;
         }
@@ -164,12 +161,12 @@ void NekLinSysIterCGLoc::DoConjugateGradient(
     // Continue until convergence
     while (true)
     {
-        if (m_totalIterations > m_maxiter)
+        if (m_totalIterations > m_NekLinSysMaxIterations)
         {
             if (m_root)
             {
                 cout << "CG iterations made = " << m_totalIterations
-                     << " using tolerance of " << m_tolerance
+                     << " using tolerance of " << m_NekLinSysTolerance
                      << " (error = " << sqrt(eps / m_rhs_magnitude)
                      << ", rhs_mag = " << sqrt(m_rhs_magnitude) << ")" << endl;
             }
@@ -213,12 +210,12 @@ void NekLinSysIterCGLoc::DoConjugateGradient(
         m_totalIterations++;
 
         // Test if norm is within tolerance
-        if (eps < m_tolerance * m_tolerance * m_rhs_magnitude)
+        if (eps < m_NekLinSysTolerance * m_NekLinSysTolerance * m_rhs_magnitude)
         {
             if (m_verbose && m_root)
             {
                 cout << "CG iterations made = " << m_totalIterations
-                     << " using tolerance of " << m_tolerance
+                     << " using tolerance of " << m_NekLinSysTolerance
                      << " (error = " << sqrt(eps / m_rhs_magnitude)
                      << ", rhs_mag = " << sqrt(m_rhs_magnitude) << ")" << endl;
             }
