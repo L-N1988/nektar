@@ -1,35 +1,70 @@
 Changelog
 =========
+
 v5.7.0
 -----
 **Library**
 - Modified MatrixFreeOp library  switch initialisation to use BOOST_PP (!1794)
 - Fix memory-leak with LowEnergyBlock preconditioner for time-updated matrices (!1627)
 - Fix Fourier expansion integration weights are related test (!1803)
+- Introduced the MatrixFree implementation for the PhysInterp1DScaled operator and tidying up MatrixFreeOps (!1812) 
 - Separate MeshGraph input/output functions into a new class (!1778)
 - Added checkpoint file writing start time in the fieldconvert filter (!1789)
 - Fix fieldconvert filter incorrect boundary values (!1789)
 - Fix numerical precision issues with filters OutputStartTime (!1789)
 - Fix AdaptiveSFD for MPI (!1821)
+- Fix interpolation on manifold (!1840)
+- Fix IterativeStaticCond when using absolute tolerance (!1850)
+- Fix deadlock by scotch with multi-threading support (!1853)
+- Fixed L2norm for FilterError (!1871)
+- Fix variable p in tetrahedrons (!1881)
+- Fix BwdTrans for Pyr with var P (!1886)
+- Allow wrapper array around a existing raw pointer (!1848)
+- Tweaked some long tests to make them faster (!!1918)
 
 **IncNavierStokesSolver**
-- Fix initial and boundary conditions in the moving reference frame (!1692)
+- Fix initial and boundary conditions in the moving reference frame (!1692, !1820)
 - Fix memory-leak for the Mixed_CG_Discontinuous projection when initializing the traceMep (!1806)
 - Add synthetic turbulence generation for the incompressible solver (!1664) 
+- Fix a uninitialized parameter in VCS (!1880)
 
 **ShallowWaterSolver**
 - Implement implicit time-discritization (!1784)
 
+**CompressibleSolver**
+- Add synthetic turbulence generator for the compressible solver (!1859)
+
 **NekMesh**
 - Added revolve module (!1825)
+- Fix Prism Reordering in Process PerAlign (!1899)
+- Extend quality measures in ProcessJac and add histogram generation(!1751)
+- Reducing run time of some tests in NekMesh(!1922)
+- Extend quality measures in ProcessJac and add histogram generation (!1751)
+- Reducing run time of some tests in NekMesh (!1922)
+- Added a reader for the CGNS input format (!1889)
+
 **FieldConvert**
 - Add vortexinducedvelocity module to compute the vortex-induced velocity (!1824)
+- Add a module to transform coordinates and vectors for the moving reference frame method (!1830)
 
 **Miscellaneous**
 - Use std::stod instead of boost::lexical_cast<NekDouble> (!1819)
 
 **Documentation**
 - Add initial documentation for the IncNavierStokesSolver (!1822)
+- Updated the supported packages in Userguid (!1904)
+- Added a example for RayleighBenardConvection in the user-guide for IncNS (!1919)
+- Fix some typos in tutorials (!1929)
+
+**CI and Packaging**
+- Debian 10 (BUSTER) is no longer supported (!1902)
+
+**Packaging**
+
+**CI and Packaging**
+- Debian 10 (BUSTER) is no longer supported (!1902)
+- Support is added for Ubuntu Noble Numbat and droped for Bionic Beaver (!1910)
+- Removed Fedora 35/36, added Fedora 39/40 (!1909)
 
 v5.6.0
 ------

@@ -54,8 +54,17 @@ CommMpi::CommMpi(int narg, char *arg[]) : Comm(narg, arg)
 
     if (!init)
     {
-        ASSERTL0(MPI_Init(&narg, &arg) == MPI_SUCCESS,
-                 "Failed to initialise MPI");
+        int thread_support = 0;
+        if (MPI_Init_thread(&narg, &arg, MPI_THREAD_MULTIPLE,
+                            &thread_support) != MPI_SUCCESS)
+        {
+            NEKERROR(
+                ErrorUtil::ewarning,
+                "Initializing MPI using MPI_Init, if scotch version > 6 and is "
+                "compiled with multi-threading, it might cause deadlocks.")
+            ASSERTL0(MPI_Init(&narg, &arg) == MPI_SUCCESS,
+                     "Failed to initialise MPI");
+        }
         // store bool to indicate that Nektar++ is in charge of finalizing MPI.
         m_controls_mpi = true;
     }
@@ -492,14 +501,6 @@ void CommMpi::v_SplitComm(int pRows, int pColumns, int pTime)
     MPI_Comm gridComm;
     if (pTime == 1)
     {
-        // There is a bug in OpenMPI 3.1.3. This bug cause some cases to fail in
-        // buster-full-build-and-test. Failed cases are:
-        //
-        // IncNavierStokesSolver_ChanFlow_3DH1D_FlowrateExplicit_MVM_par
-        // IncNavierStokesSolver_ChanFlow_3DH1D_FlowrateExplicit_MVM_par_hybrid
-
-        // See: https://github.com/open-mpi/ompi/issues/6522
-
         // Compute row and column in grid.
         int myCol = m_rank % pColumns;
         int myRow = (m_rank - myCol) / pColumns;

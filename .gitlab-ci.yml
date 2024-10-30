@@ -49,6 +49,9 @@ include:
       - .gitmodules
       - .gitlab-ci.yml
       - CMakeLists.txt
+  except:
+    refs:
+      - /^pkg\/.*$/
 
 .build-env-template: &build-env-template
   <<: *execution-conditions
@@ -119,7 +122,7 @@ include:
     - docker rm $CONTAINER_NAME
     - exit $exit_code;
   artifacts:
-    expire_in: 1 month
+    expire_in: 14 days
     paths:
       - log/
   timeout: 3h
@@ -179,7 +182,7 @@ include:
   allow_failure: true
   timeout: 1h
   artifacts:
-    expire_in: 1 month
+    expire_in: 14 days
     when: on_failure
     paths:
       - clang-tidy.diff
@@ -256,13 +259,6 @@ debian-bullseye-performance-build-env:
   tags:
     - perf
 
-debian-buster-default-build-env:
-  <<: *build-env-debian-template-default
-
-debian-buster-full-build-env:
-  <<: *build-env-debian-template-full
-  needs: ["debian-buster-default-build-env"]
-
 debian-bookworm-default-build-and-test:
   <<: *build-and-test-template
   needs: ["debian-bookworm-default-build-env"]
@@ -327,20 +323,6 @@ debian-bullseye-full-avx512-build-and-test:
   tags:
     - avx512
 
-debian-buster-default-build-and-test:
-  <<: *build-and-test-template
-  needs: ["debian-buster-default-build-env"]
-
-debian-buster-full-build-and-test:
-  <<: *build-and-test-template
-  needs: ["debian-buster-full-build-env"]
-  variables:
-    DISABLE_MCA: 1
-    GIT_SUBMODULE_STRATEGY: recursive
-    OS_DISTRO: debian
-    PYTHON_EXECUTABLE: /usr/bin/python3
-    REMOVE_UCX: 0
-
 # COMPILER WARNINGS
 debian-bookworm-default-warnings:
   <<: *compiler-warning-template
@@ -381,15 +363,6 @@ debian-bullseye-full-avx512-warnings:
 debian-bullseye-performance-warnings:
   <<: *compiler-warning-template
   needs: ["debian-bullseye-performance-build-and-test"]
-
-debian-buster-default-warnings:
-  <<: *compiler-warning-template
-  needs: ["debian-buster-default-build-and-test"]
-
-debian-buster-full-warnings:
-  <<: *compiler-warning-template
-  needs: ["debian-buster-full-build-and-test"]
-
 
 # CODE FORMATTING
 debian-bullseye-clang-format:
@@ -435,7 +408,6 @@ user-guide-build:
     - cmake -Bbuild -DCMAKE_BUILD_TYPE:STRING=Release -DNEKTAR_BUILD_LIBRARY:BOOL=OFF -DNEKTAR_BUILD_SOLVERS:BOOL=OFF -DNEKTAR_BUILD_UTILITIES:BOOL=OFF -DNEKTAR_BUILD_TESTS:BOOL=OFF -DNEKTAR_BUILD_DOC:BOOL=ON .
     - make -C build -j 4 user-guide-pdf user-guide-html developer-guide-pdf developer-guide-html
   artifacts:
-    expire_in: 1 month
     paths:
       - build/docs/user-guide/user-guide.pdf
       - build/docs/user-guide/html
@@ -448,7 +420,6 @@ doxygen-build:
     - cmake -Bbuild -DCMAKE_BUILD_TYPE:STRING=Release -DNEKTAR_BUILD_LIBRARY:BOOL=OFF -DNEKTAR_BUILD_SOLVERS:BOOL=OFF -DNEKTAR_BUILD_UTILITIES:BOOL=OFF -DNEKTAR_BUILD_TESTS:BOOL=OFF -DNEKTAR_BUILD_DOC:BOOL=ON .
     - make -C build doc
   artifacts:
-    expire_in: 1 month
     paths:
       - build/docs/doxygen/html/
 
@@ -460,7 +431,6 @@ tutorials-build:
     - cmake -Bbuild -DCMAKE_BUILD_TYPE:STRING=Release .
     - make -C build -j 2 tutorials-pdf tutorials-html
   artifacts:
-    expire_in: 1 month
     paths:
       - build/docs/tutorial/
 
@@ -476,6 +446,13 @@ tutorials-build:
   <<: *build-env-ubuntu-template-default
   stage: build-env-full
 
+ubuntu-noble-default-build-env:
+  <<: *build-env-ubuntu-template-default
+
+ubuntu-noble-full-build-env:
+  <<: *build-env-ubuntu-template-full
+  needs: ["ubuntu-noble-default-build-env"]
+
 ubuntu-jammy-default-build-env:
   <<: *build-env-ubuntu-template-default
 
@@ -490,44 +467,53 @@ ubuntu-focal-full-build-env:
   <<: *build-env-ubuntu-template-full
   needs: ["ubuntu-focal-default-build-env"]
 
-ubuntu-bionic-default-build-env:
-  <<: *build-env-ubuntu-template-default
-
-ubuntu-bionic-full-build-env:
-  <<: *build-env-ubuntu-template-full
-  needs: ["ubuntu-bionic-default-build-env"]
-
 ubuntu-jammy-default-build-and-test:
   <<: *build-and-test-template
   needs: ["ubuntu-jammy-default-build-env"]
 
 ubuntu-jammy-full-build-and-test:
   <<: *build-and-test-template
-  needs: ["ubuntu-jammy-full-build-env"]
+  needs: ["ubuntu-focal-full-build-env"]
 
-ubuntu-jammy-full-clang14-build-and-test:
+ubuntu-focal-default-build-and-test:
   <<: *build-and-test-template
-  needs: ["ubuntu-jammy-full-build-env"]
-  variables:
-    BUILD_CC: clang-14
-    BUILD_CXX: clang++-14
+  needs: ["ubuntu-focal-default-build-env"]
 
-ubuntu-jammy-full-clang14-avx2-build-and-test:
+ubuntu-focal-full-build-and-test:
   <<: *build-and-test-template
-  needs: ["ubuntu-jammy-full-build-env"]
+  needs: ["ubuntu-focal-full-build-env"]
+
+ubuntu-noble-default-build-and-test:
+  <<: *build-and-test-template
+  needs: ["ubuntu-noble-default-build-env"]
+
+ubuntu-noble-full-build-and-test:
+  <<: *build-and-test-template
+  needs: ["ubuntu-noble-full-build-env"]
+
+ubuntu-noble-full-clang18-build-and-test:
+  <<: *build-and-test-template
+  needs: ["ubuntu-noble-full-build-env"]
   variables:
-    BUILD_CC: clang-14
-    BUILD_CXX: clang++-14
+    BUILD_CC: clang-18
+    BUILD_CXX: clang++-18
+
+ubuntu-noble-full-clang18-avx2-build-and-test:
+  <<: *build-and-test-template
+  needs: ["ubuntu-noble-full-build-env"]
+  variables:
+    BUILD_CC: clang-18
+    BUILD_CXX: clang++-18
     BUILD_SIMD: avx2
   tags:
     - avx2
 
-ubuntu-jammy-full-clang14-avx512-build-and-test:
+ubuntu-noble-full-clang18-avx512-build-and-test:
   <<: *build-and-test-template
-  needs: ["ubuntu-jammy-full-build-env"]
+  needs: ["ubuntu-noble-full-build-env"]
   variables:
-    BUILD_CC: clang-14
-    BUILD_CXX: clang++-14
+    BUILD_CC: clang-18
+    BUILD_CXX: clang++-18
     BUILD_SIMD: avx512
   tags:
     - avx512
@@ -547,28 +533,6 @@ ubuntu-jammy-full-avx512-coverage:
         coverage_format: cobertura
         path: coverage/cobertura-*.xml
 
-ubuntu-focal-default-build-and-test:
-  <<: *build-and-test-template
-  needs: ["ubuntu-focal-default-build-env"]
-
-ubuntu-focal-full-build-and-test:
-  <<: *build-and-test-template
-  needs: ["ubuntu-focal-full-build-env"]
-
-ubuntu-bionic-default-build-and-test:
-  <<: *build-and-test-template
-  needs: ["ubuntu-bionic-default-build-env"]
-
-ubuntu-bionic-full-build-and-test:
-  <<: *build-and-test-template
-  needs: ["ubuntu-bionic-full-build-env"]
-  variables:
-    OS_DISTRO: ubuntu
-    PYTHON_EXECUTABLE: /usr/bin/python3
-    LD_PRELOAD: libmpi.so # required for python-vtk test
-
-
-# COMPILER WARNINGS
 ubuntu-jammy-default-warnings:
   <<: *compiler-warning-template
   needs: ["ubuntu-jammy-default-build-and-test"]
@@ -576,18 +540,6 @@ ubuntu-jammy-default-warnings:
 ubuntu-jammy-full-warnings:
   <<: *compiler-warning-template
   needs: ["ubuntu-jammy-full-build-and-test"]
-
-ubuntu-jammy-full-clang14-warnings:
-  <<: *compiler-warning-template
-  needs: ["ubuntu-jammy-full-clang14-build-and-test"]
-
-ubuntu-jammy-full-clang14-avx2-warnings:
-  <<: *compiler-warning-template
-  needs: ["ubuntu-jammy-full-clang14-avx2-build-and-test"]
-
-ubuntu-jammy-full-clang14-avx512-warnings:
-  <<: *compiler-warning-template
-  needs: ["ubuntu-jammy-full-clang14-avx512-build-and-test"]
 
 ubuntu-focal-default-warnings:
   <<: *compiler-warning-template
@@ -597,19 +549,32 @@ ubuntu-focal-full-warnings:
   <<: *compiler-warning-template
   needs: ["ubuntu-focal-full-build-and-test"]
 
-ubuntu-bionic-default-warnings:
+ubuntu-noble-default-warnings:
   <<: *compiler-warning-template
-  needs: ["ubuntu-bionic-default-build-and-test"]
+  needs: ["ubuntu-noble-default-build-and-test"]
 
-ubuntu-bionic-full-warnings:
+ubuntu-noble-full-warnings:
   <<: *compiler-warning-template
-  needs: ["ubuntu-bionic-full-build-and-test"]
+  needs: ["ubuntu-noble-full-build-and-test"]
+
+ubuntu-noble-full-clang18-warnings:
+  <<: *compiler-warning-template
+  needs: ["ubuntu-noble-full-clang18-build-and-test"]
+
+ubuntu-noble-full-clang18-avx2-warnings:
+  <<: *compiler-warning-template
+  needs: ["ubuntu-noble-full-clang18-avx2-build-and-test"]
+
+ubuntu-noble-full-clang18-avx512-warnings:
+  <<: *compiler-warning-template
+  needs: ["ubuntu-noble-full-clang18-avx512-build-and-test"]
+
 
 ## UNCOMPILED FILES
-ubuntu-jammy-uncompiled-files:
+ubuntu-noble-uncompiled-files:
   <<: *uncompiled-files-template
-  image: $CI_REGISTRY_IMAGE:env-ubuntu-jammy-full
-  needs: ["ubuntu-jammy-full-build-env"]
+  image: $CI_REGISTRY_IMAGE:env-ubuntu-noble-full
+  needs: ["ubuntu-noble-full-build-env"]
   
 ################################################
 ###################  FEDORA  ###################
