@@ -1,6 +1,31 @@
 Changelog
 =========
 
+v5.8.0
+------
+**Library**
+- Use GLL quadrature points on Tri Dirichlet BCs with CG (!1895)
+- Add FieldConvert module to perform local stability analysis for compressible flows (!1319)
+- Remove get() accessor from Array data structure (!1937)
+- Fix issue with `StdTetExp::v_LocCollapsedToLocCoord` (!1946)
+- Fix issue with `NodalTriExp::v_GetTracePhysVals` (!1951)
+- Remove deprecated version of v_SetCoeffsToOrientation functions (!1954)
+- Fix issue with Dirichlet BCs when using variable P (!1972)
+- Patch for implicit-function error in scotch-6.0.4 (!1938)
+- Tidy virtual inheritance in NodalTriExp (!1979)
+- Fix partial overload virtual function in AssemblyMap, StdRegions, and LocalRegions (!1978)
+
+**CI**
+- Fix CubeAllElements performance test tolerance (!1943)
+- Remove `allow_failure` from compiler warnings and formatting (!1958, !1966)
+- remove CI image tag when dockerhub deploy completes (!1960)
+
+**NekMesh**
+- Add high-order pyramid and prism support from gmsh (!1956)
+
+**Python**
+- Transition bindings to use pybind11 (!1950)
+
 v5.7.0
 -----
 **Library**
@@ -55,11 +80,6 @@ v5.7.0
 - Updated the supported packages in Userguid (!1904)
 - Added a example for RayleighBenardConvection in the user-guide for IncNS (!1919)
 - Fix some typos in tutorials (!1929)
-
-**CI and Packaging**
-- Debian 10 (BUSTER) is no longer supported (!1902)
-
-**Packaging**
 
 **CI and Packaging**
 - Debian 10 (BUSTER) is no longer supported (!1902)

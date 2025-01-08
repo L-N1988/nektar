@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: NekPyConvertors.hpp
+// File: main.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,51 +28,11 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Helper functions to convert STL containers to native python
-// types
+// Description: Unit tests for LibUtilities
 //
 ///////////////////////////////////////////////////////////////////////////////
-#ifndef NEKTAR_LIBRARY_LIBUTILITIES_PYTHON_NEKPYCONVERTORS_HPP
-#define NEKTAR_LIBRARY_LIBUTILITIES_PYTHON_NEKPYCONVERTORS_HPP
 
-#include <boost/python.hpp>
-#include <map>
-#include <vector>
-
-namespace py = boost::python;
-
-/**
- * @brief Converts a std::map to a Python dict
- *
- * @param input a std::map
- * @returns a Python dict with the same entries as the input map
- */
-template <typename KeyT, typename ValT>
-inline py::dict MapToPyDict(const std::map<KeyT, ValT> &input)
-{
-    py::dict ret;
-    for (auto &entry : input)
-    {
-        ret[entry.first] = entry.second;
-    }
-    return ret;
-}
-
-/**
- * @brief Converts a std::vector to a Python list
- *
- * @param input a std::vector
- * @returns a Python list with the same elements as the input vector
- */
-template <typename T>
-inline py::list VectorToPyList(const std::vector<T> &input)
-{
-    py::list ret;
-    for (auto &entry : input)
-    {
-        ret.append(entry);
-    }
-    return ret;
-}
-
-#endif // NEKTAR_LIBRARY_LIBUTILITIES_PYTHON_NEKPYCONVERTORS_HPP
+#define BOOST_AUTO_TEST_MAIN
+#define BOOST_TEST_MODULE StdRegionsUnitTests test
+#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>

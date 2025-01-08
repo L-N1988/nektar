@@ -310,7 +310,7 @@ DNekMatSharedPtr StdExpansion::CreateGeneralMatrix(const StdMatrixKey &mkey)
 
                 BwdTrans_SumFac(tmpin, tmpout);
 
-                Vmath::Vcopy(nq, tmpout.get(), 1,
+                Vmath::Vcopy(nq, tmpout.data(), 1,
                              returnval->GetRawPtr() + i * nq, 1);
             }
         }
@@ -331,7 +331,7 @@ DNekMatSharedPtr StdExpansion::CreateGeneralMatrix(const StdMatrixKey &mkey)
 
                 IProductWRTBase_SumFac(tmpin, tmpout);
 
-                Vmath::Vcopy(m_ncoeffs, tmpout.get(), 1,
+                Vmath::Vcopy(m_ncoeffs, tmpout.data(), 1,
                              returnval->GetRawPtr() + i * m_ncoeffs, 1);
             }
         }
@@ -352,7 +352,7 @@ DNekMatSharedPtr StdExpansion::CreateGeneralMatrix(const StdMatrixKey &mkey)
 
                 IProductWRTDerivBase_SumFac(0, tmpin, tmpout);
 
-                Vmath::Vcopy(m_ncoeffs, tmpout.get(), 1,
+                Vmath::Vcopy(m_ncoeffs, tmpout.data(), 1,
                              returnval->GetRawPtr() + i * m_ncoeffs, 1);
             }
         }
@@ -373,7 +373,7 @@ DNekMatSharedPtr StdExpansion::CreateGeneralMatrix(const StdMatrixKey &mkey)
 
                 IProductWRTDerivBase_SumFac(1, tmpin, tmpout);
 
-                Vmath::Vcopy(m_ncoeffs, tmpout.get(), 1,
+                Vmath::Vcopy(m_ncoeffs, tmpout.data(), 1,
                              returnval->GetRawPtr() + i * m_ncoeffs, 1);
             }
         }
@@ -394,7 +394,7 @@ DNekMatSharedPtr StdExpansion::CreateGeneralMatrix(const StdMatrixKey &mkey)
 
                 IProductWRTDerivBase_SumFac(2, tmpin, tmpout);
 
-                Vmath::Vcopy(m_ncoeffs, tmpout.get(), 1,
+                Vmath::Vcopy(m_ncoeffs, tmpout.data(), 1,
                              returnval->GetRawPtr() + i * m_ncoeffs, 1);
             }
         }
@@ -819,7 +819,7 @@ void StdExpansion::LaplacianMatrixOp_MatFree_GenericImpl(
         }
     }
 
-    Vmath::Vcopy(m_ncoeffs, store2.get(), 1, outarray.get(), 1);
+    Vmath::Vcopy(m_ncoeffs, store2.data(), 1, outarray.data(), 1);
 }
 
 void StdExpansion::WeakDerivMatrixOp_MatFree(
@@ -1068,13 +1068,6 @@ void StdExpansion::v_SetCoeffsToOrientation(
     NEKERROR(ErrorUtil::efatal, "This function is not defined for this shape");
 }
 
-void StdExpansion::v_SetCoeffsToOrientation(
-    [[maybe_unused]] Array<OneD, NekDouble> &coeffs,
-    [[maybe_unused]] StdRegions::Orientation dir)
-{
-    NEKERROR(ErrorUtil::efatal, "This function is not defined for this shape");
-}
-
 NekDouble StdExpansion::v_StdPhysEvaluate(
     [[maybe_unused]] const Array<OneD, const NekDouble> &Lcoord,
     [[maybe_unused]] const Array<OneD, const NekDouble> &physvals)
@@ -1098,8 +1091,17 @@ void StdExpansion::v_LocCollapsedToLocCoord(
     NEKERROR(ErrorUtil::efatal, "This function is not defined for this shape");
 }
 
+void StdExpansion::v_PhysInterp(
+    [[maybe_unused]] std::shared_ptr<StdExpansion> FromExp,
+    [[maybe_unused]] const Array<OneD, const NekDouble> &fromData,
+    [[maybe_unused]] Array<OneD, NekDouble> &toData)
+{
+    ASSERTL0(false, "This function is not valid or not defined");
+}
+
 const LibUtilities::BasisKey StdExpansion::v_GetTraceBasisKey(
-    [[maybe_unused]] const int i, [[maybe_unused]] const int k) const
+    [[maybe_unused]] const int i, [[maybe_unused]] const int k,
+    [[maybe_unused]] bool UseGLL) const
 {
     ASSERTL0(false, "This function is not valid or not defined");
     return LibUtilities::NullBasisKey;
