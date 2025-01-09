@@ -397,6 +397,12 @@ public:
         return v_IsNodalNonTensorialExp();
     }
 
+    void NodalToModal(const Array<OneD, const NekDouble> &inarray,
+                      Array<OneD, NekDouble> &outarray)
+    {
+        v_NodalToModal(inarray, outarray);
+    }
+
     /** \brief This function performs the Backward transformation from
      *  coefficient space to physical space
      *
@@ -941,7 +947,7 @@ public:
                                   std::array<NekDouble, 3> &firstOrderDerivs)
 
     {
-        return v_PhysEvaluate(coord, inarray, firstOrderDerivs);
+        return v_PhysEvalFirstDeriv(coord, inarray, firstOrderDerivs);
     }
 
     inline NekDouble PhysEvaluate(const Array<OneD, NekDouble> &coord,
@@ -950,8 +956,8 @@ public:
                                   std::array<NekDouble, 6> &secondOrderDerivs)
 
     {
-        return v_PhysEvaluate(coord, inarray, firstOrderDerivs,
-                              secondOrderDerivs);
+        return v_PhysEvalFirstSecondDeriv(coord, inarray, firstOrderDerivs,
+                                          secondOrderDerivs);
     }
 
     /** \brief This function evaluates the expansion at a single
@@ -977,7 +983,7 @@ public:
     NekDouble PhysEvaluate(const Array<OneD, DNekMatSharedPtr> &I,
                            const Array<OneD, const NekDouble> &physvals)
     {
-        return v_PhysEvaluate(I, physvals);
+        return v_PhysEvaluateInterp(I, physvals);
     }
 
     /**
@@ -1529,6 +1535,10 @@ private:
 
     STD_REGIONS_EXPORT virtual bool v_IsNodalNonTensorialExp();
 
+    STD_REGIONS_EXPORT virtual void v_NodalToModal(
+        [[maybe_unused]] const Array<OneD, const NekDouble> &inarray,
+        [[maybe_unused]] Array<OneD, NekDouble> &outarray){};
+
     STD_REGIONS_EXPORT virtual void v_BwdTrans(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) = 0;
@@ -1611,16 +1621,16 @@ private:
         const Array<OneD, const NekDouble> &coords,
         const Array<OneD, const NekDouble> &physvals);
 
-    STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+    STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluateInterp(
         const Array<OneD, DNekMatSharedPtr> &I,
         const Array<OneD, const NekDouble> &physvals);
 
-    STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+    STD_REGIONS_EXPORT virtual NekDouble v_PhysEvalFirstDeriv(
         const Array<OneD, NekDouble> &coord,
         const Array<OneD, const NekDouble> &inarray,
         std::array<NekDouble, 3> &firstOrderDerivs);
 
-    STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+    STD_REGIONS_EXPORT virtual NekDouble v_PhysEvalFirstSecondDeriv(
         const Array<OneD, NekDouble> &coord,
         const Array<OneD, const NekDouble> &inarray,
         std::array<NekDouble, 3> &firstOrderDerivs,

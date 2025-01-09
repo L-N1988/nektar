@@ -386,17 +386,6 @@ NekDouble NodalTriExp::v_PhysEvaluate(
     return StdExpansion2D::v_PhysEvaluate(Lcoord, physvals);
 }
 
-NekDouble NodalTriExp::v_PhysEvaluate(
-    const Array<OneD, NekDouble> &coord,
-    const Array<OneD, const NekDouble> &inarray,
-    std::array<NekDouble, 3> &firstOrderDerivs)
-{
-    Array<OneD, NekDouble> Lcoord(2);
-    ASSERTL0(m_geom, "m_geom not defined");
-    m_geom->GetLocCoords(coord, Lcoord);
-    return StdExpansion2D::v_PhysEvaluate(Lcoord, inarray, firstOrderDerivs);
-}
-
 void NodalTriExp::v_ComputeTraceNormal(const int edge)
 {
     int i;
@@ -570,6 +559,19 @@ void NodalTriExp::v_ComputeTraceNormal(const int edge)
             }
         }
     }
+}
+
+void NodalTriExp::v_ExtractDataToCoeffs(
+    const NekDouble *data, const std::vector<unsigned int> &nummodes,
+    const int mode_offset, NekDouble *coeffs,
+    [[maybe_unused]] std::vector<LibUtilities::BasisType> &fromType)
+{
+    Array<OneD, NekDouble> modes(m_ncoeffs);
+    Expansion::ExtractDataToCoeffs(data, nummodes, mode_offset, &modes[0],
+                                   fromType);
+
+    Array<OneD, NekDouble> nodes(m_ncoeffs, coeffs, eArrayWrapper);
+    ModalToNodal(modes, nodes);
 }
 
 void NodalTriExp::v_GetTracePhysVals(
