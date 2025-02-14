@@ -84,9 +84,15 @@ public:
     SOLVER_UTILS_EXPORT inline std::string SetupOutput(
         const std::string ext, const std::string inname);
 
+    SOLVER_UTILS_EXPORT inline void SetUpdateOnInitialise(bool flag)
+    {
+        m_updateOnInitialise = flag;
+    }
+
 protected:
     LibUtilities::SessionReaderSharedPtr m_session;
     const std::weak_ptr<EquationSystem> m_equ;
+    bool m_updateOnInitialise = true;
 
     virtual void v_Initialise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,

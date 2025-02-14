@@ -69,7 +69,7 @@ FilterMean::~FilterMean()
 
 void FilterMean::v_Initialise(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-    const NekDouble &time)
+    [[maybe_unused]] const NekDouble &time)
 {
     MultiRegions::ExpListSharedPtr areaField;
     int spacedim = 2;
@@ -132,7 +132,10 @@ void FilterMean::v_Initialise(
 
     // Output values at initial time.
     m_index = 0;
-    v_Update(pFields, time);
+    if (m_updateOnInitialise)
+    {
+        v_Update(pFields, time);
+    }
 }
 
 void FilterMean::v_Update(

@@ -80,7 +80,7 @@ FilterEnergy::~FilterEnergy()
 
 void FilterEnergy::v_Initialise(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-    const NekDouble &time)
+    [[maybe_unused]] const NekDouble &time)
 {
     m_index = -1;
     MultiRegions::ExpListSharedPtr areaField;
@@ -117,9 +117,10 @@ void FilterEnergy::v_Initialise(
     {
         m_area *= m_homogeneousLength;
     }
-
-    // Output values at initial time.
-    v_Update(pFields, time);
+    if (m_updateOnInitialise)
+    {
+        v_Update(pFields, time);
+    }
 }
 
 void FilterEnergy::v_Update(

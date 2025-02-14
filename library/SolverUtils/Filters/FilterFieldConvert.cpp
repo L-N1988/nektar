@@ -439,6 +439,7 @@ void FilterFieldConvert::v_Update(
     const NekDouble &time)
 {
     m_index++;
+
     if (m_index % m_sampleFrequency > 0 ||
         (time - m_outputStartTime) < -1.0e-07)
     {
