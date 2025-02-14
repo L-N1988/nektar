@@ -220,7 +220,7 @@ FilterAeroForces::~FilterAeroForces()
  */
 void FilterAeroForces::v_Initialise(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-    const NekDouble &time)
+    [[maybe_unused]] const NekDouble &time)
 {
     // Load mapping
     m_mapping = GlobalMapping::Mapping::Load(m_session, pFields);
@@ -418,7 +418,11 @@ void FilterAeroForces::v_Initialise(
 
     m_lastTime = -1;
     m_index    = 0;
-    v_Update(pFields, time);
+
+    if (m_updateOnInitialise)
+    {
+        v_Update(pFields, time);
+    }
 }
 
 /**

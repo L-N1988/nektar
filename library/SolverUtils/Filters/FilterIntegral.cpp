@@ -143,7 +143,7 @@ FilterIntegral::FilterIntegral(
  */
 void FilterIntegral::v_Initialise(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-    const NekDouble &time)
+    [[maybe_unused]] const NekDouble &time)
 {
 
     // Create map from element ID -> expansion list ID
@@ -266,8 +266,10 @@ void FilterIntegral::v_Initialise(
 
         m_compExpMap[i] = tmpCompExp;
     }
-
-    v_Update(pFields, time);
+    if (m_updateOnInitialise)
+    {
+        v_Update(pFields, time);
+    }
 }
 
 /**

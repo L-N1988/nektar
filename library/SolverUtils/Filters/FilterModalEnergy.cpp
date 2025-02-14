@@ -109,7 +109,7 @@ FilterModalEnergy::~FilterModalEnergy()
  */
 void FilterModalEnergy::v_Initialise(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-    const NekDouble &time)
+    [[maybe_unused]] const NekDouble &time)
 {
     LibUtilities::CommSharedPtr vComm = pFields[0]->GetComm();
 
@@ -139,7 +139,10 @@ void FilterModalEnergy::v_Initialise(
     }
 
     m_index = 0;
-    v_Update(pFields, time);
+    if (m_updateOnInitialise)
+    {
+        v_Update(pFields, time);
+    }
 }
 
 /**

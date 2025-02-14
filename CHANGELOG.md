@@ -39,7 +39,9 @@ v5.8.0
 - Updated the User-guide with additional inofrmation for outflow BC, addressing the issue #103 (!1988)
 - Updated the User-guide with additional inofrmation for outflow BC, addressing the issue #103 (!1990)
 
-
+**PulseWaveSolver**
+- Added ability to output history points (and other filters) (!2000)
+	
 v5.7.0
 -----
 **Library**
