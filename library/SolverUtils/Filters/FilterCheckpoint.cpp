@@ -75,12 +75,17 @@ FilterCheckpoint::~FilterCheckpoint()
 }
 
 void FilterCheckpoint::v_Initialise(
-    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-    const NekDouble &time)
+    [[maybe_unused]] const Array<OneD, const MultiRegions::ExpListSharedPtr>
+        &pFields,
+    [[maybe_unused]] const NekDouble &time)
 {
     m_index       = 0;
     m_outputIndex = 0;
-    v_Update(pFields, time);
+
+    if (m_updateOnInitialise)
+    {
+        v_Update(pFields, time);
+    }
 }
 
 void FilterCheckpoint::v_Update(

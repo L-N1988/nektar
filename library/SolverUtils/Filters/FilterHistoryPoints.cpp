@@ -288,7 +288,7 @@ bool FilterHistoryPoints::GetPoint(Array<OneD, NekDouble> gloCoord, int I)
  */
 void FilterHistoryPoints::v_Initialise(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-    const NekDouble &time)
+    [[maybe_unused]] const NekDouble &time)
 {
     ASSERTL0(!m_historyPointStream.fail(), "No history points in stream.");
 
@@ -445,7 +445,11 @@ void FilterHistoryPoints::v_Initialise(
 
         m_session->MatchSolverInfo("Driver", "Adaptive", m_adaptive, false);
     }
-    v_Update(pFields, time);
+
+    if (m_updateOnInitialise)
+    {
+        v_Update(pFields, time);
+    }
 }
 
 /**
@@ -667,7 +671,6 @@ void FilterHistoryPoints::v_WriteData(const int &rank,
         if (!m_outputOneFile)
         {
             m_outputStream.close();
-            ;
         }
     }
 }
@@ -681,7 +684,10 @@ void FilterHistoryPoints::v_Finalise(
 {
     if (pFields[0]->GetComm()->GetRank() == 0 && m_outputOneFile)
     {
-        m_outputStream.close();
+        if (m_outputStream.is_open())
+        {
+            m_outputStream.close();
+        }
     }
 }
 
