@@ -288,6 +288,11 @@ public:
         return lst;
     }
 
+    void ClearCADSurfs()
+    {
+        m_CADSurfList.clear();
+    }
+
     int GetNumCadCurve()
     {
         return m_CADCurveList.size();

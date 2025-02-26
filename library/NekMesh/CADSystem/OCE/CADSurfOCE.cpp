@@ -158,6 +158,52 @@ std::array<NekDouble, 2> CADSurfOCE::locuv(std::array<NekDouble, 3> p,
     return uv;
 }
 
+std::array<NekDouble, 2> CADSurfOCE::locuv(std::array<NekDouble, 3> p,
+                                           NekDouble &dist, NekDouble Umin,
+                                           NekDouble Usup, NekDouble Vmin,
+                                           NekDouble Vsup)
+{
+    gp_Pnt loc(p[0] * 1000.0, p[1] * 1000.0, p[2] * 1000.0);
+    std::array<NekDouble, 2> uv;
+
+    if (!m_isTransfiniteSurf)
+    {
+        gp_Pnt2d p2 = m_sas->ValueOfUV(loc, Precision::Confusion());
+
+        TopAbs_State s = m_2Dclass->Perform(p2);
+
+        if (s == TopAbs_OUT)
+        {
+            BRepBuilderAPI_MakeVertex v(loc);
+            BRepExtrema_DistShapeShape dss(
+                BRepTools::OuterWire(TopoDS::Face(m_shape)), v.Shape());
+            dss.Perform();
+            gp_Pnt np = dss.PointOnShape1(1);
+            p2        = m_sas->ValueOfUV(np, Precision::Confusion());
+        }
+
+        uv[0] = p2.X();
+        uv[1] = p2.Y();
+
+        gp_Pnt p3 = m_sas->Value(p2);
+
+        dist = p3.Distance(loc) / 1000.0;
+    }
+    else
+    {
+        std::array<NekDouble, 3> out;
+        GeomAPI_ProjectPointOnSurf proj(loc, m_s, Umin, Usup, Vmin, Vsup,
+                                        Precision::Confusion(),
+                                        Extrema_ExtAlgo_Grad);
+        proj.Perform(loc);
+        ASSERTL1(proj.NbPoints() > 0, "Unable to find a projection!");
+        proj.LowerDistanceParameters(uv[0], uv[1]);
+        dist = proj.LowerDistance();
+    }
+
+    return uv;
+}
+
 NekDouble CADSurfOCE::Curvature(std::array<NekDouble, 2> uv)
 {
 #if defined(NEKTAR_DEBUG)
@@ -292,7 +338,7 @@ void CADSurfOCE::Test(std::array<NekDouble, 2> uv)
 {
     stringstream error;
 
-    error << "Point not within parameter plane: ";
+    error << "Point not within parameter plane: " << endl;
 
     bool passed = true;
 

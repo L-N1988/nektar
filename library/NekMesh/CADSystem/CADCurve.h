@@ -189,6 +189,16 @@ public:
     NEKMESH_EXPORT virtual NekDouble loct(std::array<NekDouble, 3> xyz,
                                           NekDouble &t) = 0;
 
+    /*
+     * @brief locates a point in the parametric space. returns the
+     * distance to the point and passes t by reference and updates it
+     * This is in the parametric bounds of the Curve and is important for
+     * periodic surfaces (Circles)
+     */
+    NEKMESH_EXPORT virtual NekDouble loct(std::array<NekDouble, 3> xyz,
+                                          NekDouble &t, NekDouble cf,
+                                          NekDouble cl) = 0;
+
     /**
      * @brief Locates a point @p xyz in the parametric space. returns the
      * distance to the point.

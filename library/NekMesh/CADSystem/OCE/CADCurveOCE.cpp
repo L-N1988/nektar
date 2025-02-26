@@ -97,6 +97,23 @@ NekDouble CADCurveOCE::loct(std::array<NekDouble, 3> xyz, NekDouble &t)
     return p.Distance(loc) / 1000.0;
 }
 
+// This function updates the parametric coordinate t of a cartesian point xyz
+// within the bounds of the CADCurve cf and cl ; Fixes the bug with respect to
+// Periodic CADCurves like Circles
+NekDouble CADCurveOCE::loct(std::array<NekDouble, 3> xyz, NekDouble &t,
+                            NekDouble cf, NekDouble cl)
+{
+    t = 0.0;
+
+    gp_Pnt loc(xyz[0] * 1000.0, xyz[1] * 1000.0, xyz[2] * 1000.0);
+
+    ShapeAnalysis_Curve sac;
+    gp_Pnt p;
+    sac.Project(m_c, loc, Precision::Confusion(), p, t, cf, cl);
+
+    return p.Distance(loc) / 1000.0;
+}
+
 std::array<NekDouble, 3> CADCurveOCE::P(NekDouble t)
 {
     gp_Pnt loc = m_c->Value(t);
