@@ -75,10 +75,35 @@ public:
     }
 
 private:
+    // Min edge length in an element
+    std::map<NodeSharedPtr, NekDouble> minConEdge; // should be unordered?!
+    // Vertices on the surface
+    NodeSet surfNodes;
+    // Surface vertices to 3D elements
+    std::map<NodeSharedPtr, std::vector<ElementSharedPtr>> surfNodeToEl;
+    // this is a set of nodes which have a CAD failure
+    // if touched in the HO stage they should be ignored and linearised
+    NodeSet lockedNodes;
+
+    void LoadCAD(std::string filename);
+    void CreateBoundingBoxes(bgi::rtree<boxI, bgi::quadratic<16>> &rtree);
+    bool IsNotValid(std::vector<NekMesh::ElementSharedPtr> &els);
+    void CalculateMinEdgeLength();
+    void Auxilaries();
+    void LinkVertexToCAD(NekMesh::MeshSharedPtr &m_mesh, bool projectVertex,
+                         NodeSet &lockedNodes, NekDouble tolv1, NekDouble tolv2,
+                         bgi::rtree<boxI, bgi::quadratic<16>> &rtree);
+
     bool FindAndProject(bgi::rtree<boxI, bgi::quadratic<16>> &rtree,
                         std::array<NekDouble, 3> &in, int &surf);
+    void LinkEdgeToCAD();
+    void LinkFaceToCad();
 
-    bool IsNotValid(std::vector<NekMesh::ElementSharedPtr> &els);
+    // for CASE 3 elements between two surfaces
+    void ProjectEdges(EdgeSet &surfEdges, int order,
+                      bgi::rtree<boxI, bgi::quadratic<16>> &rtree);
+
+    void ExportCAD();
 };
 } // namespace Nektar::NekMesh
 

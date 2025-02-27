@@ -64,7 +64,18 @@ ModuleKey ProcessProjectCAD::className =
 ProcessProjectCAD::ProcessProjectCAD(MeshSharedPtr m) : ProcessModule(m)
 {
     m_config["file"]  = ConfigOption(false, "", "CAD file");
-    m_config["order"] = ConfigOption(false, "4", "CAD file");
+    m_config["order"] = ConfigOption(false, "4", "Enforce a polynomial order");
+    m_config["surfopti"] = ConfigOption(false, "0", "Run HO-Surface Module");
+    m_config["varopti"] =
+        ConfigOption(false, "0", "Run the Variational Optmiser");
+    m_config["cLength"] =
+        ConfigOption(false, "1", "Characteristic Length CAD-Reconstruction");
+    m_config["tolv1"] =
+        ConfigOption(false, "1e-7",
+                     "(Optional) min distance of initial Vertex to CADSurface");
+    m_config["tolv2"] = ConfigOption(
+        false, "1e-5",
+        " (Optional) max distance of initial Vertex to CADSurface");
 }
 
 ProcessProjectCAD::~ProcessProjectCAD()
@@ -83,8 +94,8 @@ bool ProcessProjectCAD::FindAndProject(
     {
         // along a projecting edge the node is too far from any surface boxes
         // this is hardly surprising but rare, return false and linearise
-        m_log(WARNING) << "FindAndProject() - Edge node not in any of the "
-                          "Bounding boxes - THERE WILL BE NO PROJECTION ! "
+        m_log(VERBOSE) << "FindAndProject() - Edge node not in any of the "
+                          "Bounding boxes - No projection! "
                        << endl;
         return false;
     }
@@ -215,9 +226,19 @@ bool ProcessProjectCAD::IsNotValid(vector<ElementSharedPtr> &els)
                 return true;
             }
         }
+        else if (els[i]->GetShapeType() == LibUtilities::eHexahedron)
+        {
+            // Hexes are not checked !
+            NekDouble jc = 1.0;
+            if (jc < NekConstants::kNekZeroTol)
+            {
+                return true;
+            }
+        }
         else
         {
-            m_log(FATAL) << "Only prisms and tetrahedra supported." << endl;
+            m_log(FATAL) << "Only prisms, pyramids and tetrahedra supported."
+                         << endl;
         }
     }
 
@@ -237,33 +258,111 @@ void ProcessProjectCAD::Process()
         m_log(VERBOSE) << "Mesh order not set: will assume order 4" << endl;
     }
 
-    m_mesh->m_nummode = m_config["order"].as<int>() + 1;
+    // Projection Order
+    int order         = m_config["order"].as<int>();
+    m_mesh->m_nummode = order + 1;
 
-    // load instance of the CAD model
-    ModuleSharedPtr module = GetModuleFactory().CreateInstance(
-        ModuleKey(eProcessModule, "loadcad"), m_mesh);
-    module->RegisterConfig("filename", m_config["file"].as<string>());
-    module->SetDefaults();
-    module->Process();
+    // Tolerances for vertex association
+    NekDouble tolv1, tolv2;
+    tolv1 = m_config["tolv1"].as<NekDouble>();
+    tolv2 = m_config["tolv2"].as<NekDouble>();
 
-    // turn the bounding box of the CAD surfaces into a k-d tree
-    vector<boxI> boxes;
-    for (int i = 1; i <= m_mesh->m_cad->GetNumSurf(); i++)
+    // Characteristic Length for CAD Reconstruction (auto calculation of tolv1
+    // and tolv2)
+    if (m_config["cLength"].beenSet)
     {
-        m_log(VERBOSE).Progress(i, m_mesh->m_cad->GetNumSurf(),
-                                "building surface bboxes", i - 1);
-        auto bx = m_mesh->m_cad->GetSurf(i)->BoundingBox();
-        boxes.push_back(make_pair(
-            box(point(bx[0], bx[1], bx[2]), point(bx[3], bx[4], bx[5])), i));
+        NekDouble cLength = m_config["cLength"].as<NekDouble>();
+        tolv1 *= cLength;
+        tolv2 *= cLength;
     }
 
-    m_log(VERBOSE).Newline();
-    m_log(VERBOSE) << "Building admin data structures." << endl;
+    // 1. Load CAD instance of the CAD model
+    std::string filename = m_config["file"].as<string>();
+    LoadCAD(filename);
 
-    bgi::rtree<boxI, bgi::quadratic<16>> rtree(boxes);
+    // 2. Create Bounding boxes of the CAD surfaces into a k-d tree
+    bgi::rtree<boxI, bgi::quadratic<16>> rtree;
+    CreateBoundingBoxes(rtree);
 
-    NodeSet surfNodes;
+    // 3. Auxilaries ( can be moved to Module.cpp)
+    // SurfNodes , surfNodeToEl, minConEdge
+    Auxilaries();
 
+    // 4.  Link Surface Vertices to CAD and Project them to the closest CAD
+    LinkVertexToCAD(m_mesh, true, lockedNodes, tolv1, tolv2, rtree);
+
+    // 5. clear the associations with CAD surfaces
+    // necessary since the projection of the edges will change the surface uv
+    // and the association will be wrong to some surfaces that were closed
+    // beforehand
+    for (auto vertex = surfNodes.begin(); vertex != surfNodes.end(); vertex++)
+    {
+        (*vertex)->ClearCADSurfs();
+    }
+
+    // 6. Update the secondary tolerances on already projected nodes and do the
+    //  final Linking Vertex - CAD Surface / Curve
+    tolv1, tolv2 = 1e-9, 1e-8;
+    LinkVertexToCAD(m_mesh, false, lockedNodes, tolv1, tolv2, rtree);
+
+    // // 7. Associate Edges to CAD
+    // LinkEdgeToCAD();
+
+    // // 8. Associate Faces to CAD
+    // LinkFaceToCAD();
+
+    // // 9. Validate CAD Faces vs Edges
+    //
+
+    // make edges of surface mesh unique
+    ClearElementLinks();
+    EdgeSet surfEdges;
+    vector<ElementSharedPtr> &elmt = m_mesh->m_element[2];
+    map<int, int> surfIdToLoc;
+    for (int i = 0; i < elmt.size(); i++)
+    {
+        surfIdToLoc.insert(make_pair(elmt[i]->GetId(), i));
+        for (int j = 0; j < elmt[i]->GetEdgeCount(); ++j)
+        {
+            pair<EdgeSet::iterator, bool> testIns;
+            EdgeSharedPtr ed = elmt[i]->GetEdge(j);
+            testIns          = surfEdges.insert(ed);
+
+            if (testIns.second)
+            {
+                EdgeSharedPtr ed2 = *testIns.first;
+                ed2->m_elLink.push_back(
+                    pair<ElementSharedPtr, int>(elmt[i], j));
+            }
+            else
+            {
+                EdgeSharedPtr e2 = *(testIns.first);
+                elmt[i]->SetEdge(j, e2);
+
+                // Update edge to element map.
+                e2->m_elLink.push_back(pair<ElementSharedPtr, int>(elmt[i], j));
+            }
+        }
+    }
+
+    // Project the Edges to CAD that
+    ProjectEdges(surfEdges, order, rtree);
+}
+
+void ProcessProjectCAD::LoadCAD(std::string filename)
+{
+    m_log(VERBOSE) << "Start Loading the CAD file " << endl;
+    ModuleSharedPtr module = GetModuleFactory().CreateInstance(
+        ModuleKey(eProcessModule, "loadcad"), m_mesh);
+    module->RegisterConfig("filename", filename);
+    module->SetDefaults();
+    module->Process();
+    m_log(VERBOSE) << "CAD loaded succesfully!" << endl;
+}
+
+void ProcessProjectCAD::Auxilaries()
+{
+    // find nodes on the surface
     // find unique nodes on the surface
     for (int i = 0; i < m_mesh->m_element[2].size(); i++)
     {
@@ -274,8 +373,6 @@ void ProcessProjectCAD::Process()
             surfNodes.insert(ns[j]);
         }
     }
-
-    map<NodeSharedPtr, vector<ElementSharedPtr>> surfNodeToEl;
 
     // link surface nodes to their 3D element
     for (int i = 0; i < m_mesh->m_element[3].size(); i++)
@@ -293,8 +390,36 @@ void ProcessProjectCAD::Process()
         }
     }
 
+    // Calculate the min edge length of the elements
+    // Calculate MinConEdge
+    CalculateMinEdgeLength();
+}
+
+void ProcessProjectCAD::CreateBoundingBoxes(
+    bgi::rtree<boxI, bgi::quadratic<16>> &rtree)
+{
+    vector<boxI> boxes;
+    for (int i = 1; i <= m_mesh->m_cad->GetNumSurf(); i++)
+    {
+        m_log(VERBOSE).Progress(i, m_mesh->m_cad->GetNumSurf(),
+                                "building surface bboxes", i - 1);
+        auto bx = m_mesh->m_cad->GetSurf(i)->BoundingBox();
+        boxes.push_back(make_pair(
+            box(point(bx[0], bx[1], bx[2]), point(bx[3], bx[4], bx[5])), i));
+
+        m_log(VERBOSE) << " Boundaing box = " << i << endl;
+        m_log(VERBOSE) << bx[0] << " " << bx[1] << " " << bx[2] << endl;
+        m_log(VERBOSE) << bx[3] << " " << bx[4] << " " << bx[5] << endl;
+    }
+
+    m_log(VERBOSE).Newline();
+    m_log(VERBOSE) << "Building admin data structures." << endl;
+    rtree.insert(boxes.begin(), boxes.end());
+}
+
+void ProcessProjectCAD::CalculateMinEdgeLength()
+{
     // link the surface node to a value for the shortest connecting edge to it
-    map<NodeSharedPtr, NekDouble> minConEdge;
     for (int i = 0; i < m_mesh->m_element[2].size(); i++)
     {
         ElementSharedPtr el      = m_mesh->m_element[2][i];
@@ -331,16 +456,18 @@ void ProcessProjectCAD::Process()
             minConEdge.insert(make_pair(ns[2], min(l2, l3)));
         }
     }
+}
 
+void ProcessProjectCAD::LinkVertexToCAD(
+    NekMesh::MeshSharedPtr &m_mesh, bool projectVertex, NodeSet &lockedNodes,
+    NekDouble tolv1, NekDouble tolv2,
+    bgi::rtree<boxI, bgi::quadratic<16>> &rtree)
+{
     map<int, vector<int>> finds;
 
     m_log(VERBOSE) << "Searching tree." << endl;
 
     NekDouble maxNodeCor = 0;
-
-    // this is a set of nodes which have a CAD failure
-    // if touched in the HO stage they should be ignored and linearised
-    NodeSet lockedNodes;
 
     // find nodes surface and parametric location
     int ct = 0;
@@ -355,16 +482,25 @@ void ProcessProjectCAD::Process()
 
         if (result.size() == 0)
         {
-            m_log(FATAL) << "Node thinks it is not in any boxes." << endl;
+            // Vertex is too far from any surface bounding boxes
+            m_log(WARNING)
+                << "Vertex  " << (*i)
+                << " is not in any boundin boxes. 1. "
+                   "Make sure you use the correct STEP file. 2. The problem is "
+                   "likely in the linear mesh -> try to refine this region.  "
+                << endl;
+            continue;
         }
 
+        // Vertex Tolerances to the CAD Surface - 0.5 * min edge length + [min
+        // tol max tol]
         NekDouble tol = minConEdge[*i] * 0.5;
-        tol           = min(tol, 5e-4);
-        tol           = max(tol, 1e-6);
+        tol           = min(tol, tolv1);
+        tol           = max(tol, tolv2);
 
         vector<int> distId;
         vector<NekDouble> distList;
-
+        // sort the surfaces by distance to the node
         for (int j = 0; j < result.size(); j++)
         {
             NekDouble dist;
@@ -401,7 +537,8 @@ void ProcessProjectCAD::Process()
         distId.resize(pos);
 
         finds[pos].push_back(0);
-
+        // if the node is not close to any surface lock it (no CAD given + no
+        // projection for its edges)
         if (pos == 0)
         {
             lockedNodes.insert(*i);
@@ -433,16 +570,19 @@ void ProcessProjectCAD::Process()
                 NekDouble tmpY = (*i)->m_y;
                 NekDouble tmpZ = (*i)->m_z;
 
-                (*i)->m_x = l[0];
-                (*i)->m_y = l[1];
-                (*i)->m_z = l[2];
+                (*i)->m_x = s->P(uvt)[0];
+                (*i)->m_y = s->P(uvt)[1];
+                (*i)->m_z = s->P(uvt)[2];
 
-                if (IsNotValid(surfNodeToEl[*i]))
+                if (ProcessProjectCAD::IsNotValid(surfNodeToEl[*i]))
                 {
                     (*i)->m_x = tmpX;
                     (*i)->m_y = tmpY;
                     (*i)->m_z = tmpZ;
-                    m_log(VERBOSE) << "reset element projection" << endl;
+
+                    m_log(VERBOSE) << "Element not valid after vertex ";
+                    m_log(VERBOSE)
+                        << "projection reset it and lock the vertex" << endl;
                     break;
                 }
 
@@ -478,40 +618,21 @@ void ProcessProjectCAD::Process()
     }
 
     m_log(VERBOSE) << "  - max surface node correction " << maxNodeCor << endl;
+}
 
-    // make edges of surface mesh unique
-    ClearElementLinks();
-    EdgeSet surfEdges;
-    vector<ElementSharedPtr> &elmt = m_mesh->m_element[2];
-    map<int, int> surfIdToLoc;
-    for (int i = 0; i < elmt.size(); i++)
-    {
-        surfIdToLoc.insert(make_pair(elmt[i]->GetId(), i));
-        for (int j = 0; j < elmt[i]->GetEdgeCount(); ++j)
-        {
-            pair<EdgeSet::iterator, bool> testIns;
-            EdgeSharedPtr ed = elmt[i]->GetEdge(j);
-            testIns          = surfEdges.insert(ed);
+void LinkEdgeToCAD()
+{
+}
 
-            if (testIns.second)
-            {
-                EdgeSharedPtr ed2 = *testIns.first;
-                ed2->m_elLink.push_back(
-                    pair<ElementSharedPtr, int>(elmt[i], j));
-            }
-            else
-            {
-                EdgeSharedPtr e2 = *(testIns.first);
-                elmt[i]->SetEdge(j, e2);
+void LinkFaceToCad()
+{
+}
 
-                // Update edge to element map.
-                e2->m_elLink.push_back(pair<ElementSharedPtr, int>(elmt[i], j));
-            }
-        }
-    }
+void ProcessProjectCAD::ProjectEdges(
+    EdgeSet &surfEdges, int order, bgi::rtree<boxI, bgi::quadratic<16>> &rtree)
+{
 
-    int order = m_config["order"].as<int>();
-
+    // Project the Edges to CAD
     map<int, vector<int>> eds;
 
     LibUtilities::PointsKey ekey(order + 1,
