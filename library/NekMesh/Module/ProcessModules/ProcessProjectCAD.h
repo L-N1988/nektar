@@ -79,6 +79,8 @@ private:
     std::map<NodeSharedPtr, NekDouble> minConEdge; // should be unordered?!
     // Vertices on the surface
     NodeSet surfNodes;
+    // Edges on the surface
+    EdgeSet surfEdges;
     // Surface vertices to 3D elements
     std::map<NodeSharedPtr, std::vector<ElementSharedPtr>> surfNodeToEl;
     // this is a set of nodes which have a CAD failure
@@ -96,13 +98,14 @@ private:
 
     bool FindAndProject(bgi::rtree<boxI, bgi::quadratic<16>> &rtree,
                         std::array<NekDouble, 3> &in, int &surf);
-    void LinkEdgeToCAD();
+    void LinkEdgeToCAD(EdgeSet surfEdges);
     void LinkFaceToCad();
 
     // for CASE 3 elements between two surfaces
     void ProjectEdges(EdgeSet &surfEdges, int order,
                       bgi::rtree<boxI, bgi::quadratic<16>> &rtree);
 
+    void Diagnostics();
     void ExportCAD();
 };
 } // namespace Nektar::NekMesh
