@@ -96,14 +96,17 @@ private:
                          NodeSet &lockedNodes, NekDouble tolv1, NekDouble tolv2,
                          bgi::rtree<boxI, bgi::quadratic<16>> &rtree);
 
+
     bool FindAndProject(bgi::rtree<boxI, bgi::quadratic<16>> &rtree,
                         std::array<NekDouble, 3> &in, int &surf);
-    void LinkEdgeToCAD(EdgeSet surfEdges);
+    void LinkEdgeToCAD(EdgeSet &surfEdges);
     void LinkFaceToCad();
 
     // for CASE 3 elements between two surfaces
     void ProjectEdges(EdgeSet &surfEdges, int order,
                       bgi::rtree<boxI, bgi::quadratic<16>> &rtree);
+    std::vector<int> IntersectCADSurf(std::vector<CADSurfSharedPtr> v1_CADs,
+    std::vector<CADSurfSharedPtr> v2_CADs) ;
 
     void Diagnostics();
     void ExportCAD();
