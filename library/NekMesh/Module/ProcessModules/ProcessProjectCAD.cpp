@@ -65,7 +65,7 @@ ProcessProjectCAD::ProcessProjectCAD(MeshSharedPtr m) : ProcessModule(m)
 {
     m_config["file"]  = ConfigOption(false, "", "CAD file");
     m_config["order"] = ConfigOption(false, "4", "Enforce a polynomial order");
-    m_config["surfopti"] = ConfigOption(false, "0", "Run HO-Surface Module");
+    m_config["surfopti"] = ConfigOption(true, "1", "Run HO-Surface Module");
     m_config["varopti"] =
         ConfigOption(false, "0", "Run the Variational Optmiser");
     m_config["cLength"] =
@@ -315,12 +315,41 @@ void ProcessProjectCAD::Process()
     //
 
 
-
     // Project the Edges to CAD that
     ProjectEdges(surfEdges, order, rtree);
 
-    Diagnostics();
+
+    ////**** HOSurface ****////
+    int m_surfopti = m_config["surfopti"].as<bool>();
+    ModuleSharedPtr module = GetModuleFactory().CreateInstance(
+        ModuleKey(eProcessModule, "hosurface"), m_mesh);
+    module->SetLogger(m_log);
+    if (m_surfopti==1)
+    {
+        module->RegisterConfig("opti","");
+
+        try
+        {
+            module->SetDefaults();
+            module->Process();
+        }
+        catch (runtime_error &e)
+        {
+            m_log(WARNING) << "High-order surface meshing has failed with message:"
+                        << endl;
+            m_log(WARNING) << e.what() << endl;
+            m_log(WARNING) << "The mesh will be written as normal but the "
+                        << "incomplete surface will remain faceted"
+                        << endl;
+            return;
+        }
+    }
     
+    Diagnostics();
+    // ExportCAD();
+
+    m_log(VERBOSE) << "HO-Surface CAD complete." << endl;
+
 }
 
 void ProcessProjectCAD::LoadCAD(std::string filename)
@@ -719,6 +748,12 @@ void ProcessProjectCAD::ProjectEdges(
     // make surface edges high-order
     for (auto i = surfEdges.begin(); i != surfEdges.end(); i++)
     {
+        // IF the edge is already associated with a CAD surface, HOSurf will do the curving job
+        if((*i)->m_parentCAD)
+        {
+            continue;
+        }
+
         if (lockedNodes.count((*i)->m_n1) || lockedNodes.count((*i)->m_n2))
         {
             continue;
@@ -931,8 +966,8 @@ void ProcessProjectCAD::LinkFaceToCAD()
             continue ; 
         }
        
-        //  
-        
+        // CASE2 - all vertices internal to same CADSurf
+                
 
         // 
 
@@ -1794,6 +1829,7 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //     }
     // }
 }
+
 
 
 } // namespace Nektar::NekMesh

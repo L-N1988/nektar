@@ -568,6 +568,7 @@ void HOSurfaceMesh::Process()
         }
     }
 
+    cout << '\n' ; 
     m_log(WARNING) << "Surface Optimization (T/F)  = " << qOpti << endl;
     m_log(WARNING) << "There were " << cntBreak
                    << " 2D Surface Faces that were skipped for HOSurfModule. "
