@@ -309,7 +309,7 @@ void ProcessProjectCAD::Process()
     LinkEdgeToCAD(surfEdges);
 
     // // 8. Associate Faces to CAD
-    // LinkFaceToCAD();
+    LinkFaceToCAD();
 
     // // 9. Validate CAD Faces vs Edges
     //
@@ -398,9 +398,6 @@ void ProcessProjectCAD::Auxilaries()
             }
         }
     }
-
-    cout << " Linking Surface Edges  N = " << surfEdges.size() << endl ;
-
 }
 
 void ProcessProjectCAD::CreateBoundingBoxes(
@@ -630,11 +627,8 @@ void ProcessProjectCAD::LinkVertexToCAD(
 
 void ProcessProjectCAD::LinkEdgeToCAD(EdgeSet &surfEdges)
 {
-    cout << " Linking Surface Edges  N = " << surfEdges.size() << endl ;
-
     for(auto edge : surfEdges)
     {
-        
         NodeSharedPtr v1 = edge->m_n1;
         NodeSharedPtr v2 = edge->m_n2;
 
@@ -914,8 +908,37 @@ void ProcessProjectCAD::Diagnostics()
 
 
 
-void ProcessProjectCAD::LinkFaceToCad()
+void ProcessProjectCAD::LinkFaceToCAD()
 {
+    for(auto element : m_mesh->m_element[2])
+    {
+        vector<NodeSharedPtr> vertices = element->GetVertexList();
+        vector<EdgeSharedPtr> edges = element->GetEdgeList();
+        
+        // CASE1 - all edges internal to same CADSurf
+        bool internal = true ;
+        for(int i = 1; i < edges.size(); i++)
+        {
+            if(edges[i]->m_parentCAD != edges[i-1]->m_parentCAD)
+            {
+                internal = false ; 
+                break;
+            }
+        }
+        if(internal)
+        {
+            element->m_parentCAD = edges[0]->m_parentCAD;
+            continue ; 
+        }
+       
+        //  
+        
+
+        // 
+
+        
+    }
+
 
     // // Identify CAD object for every boundary element based on the common
     // // CADobjects of the member vertices
