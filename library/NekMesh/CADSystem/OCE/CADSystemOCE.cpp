@@ -343,7 +343,8 @@ bool CADSystemOCE::LoadCAD()
                     }
                     else
                     {
-                        ASSERTL0(false, "Name error");
+
+                        //ASSERTL0(false, "Name error");
                     }
                 }
             }

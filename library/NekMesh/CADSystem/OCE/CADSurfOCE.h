@@ -74,6 +74,7 @@ public:
                                    NekDouble &dist) override;
     NekDouble Curvature(std::array<NekDouble, 2> uv) override;
     std::array<NekDouble, 6> BoundingBox() override;
+    std::array<NekDouble, 6> BoundingBox(NekDouble scale) override;
     bool IsPlanar() override;
     std::array<NekDouble, 2> locuv(std::array<NekDouble, 3> p, NekDouble &dist,
                                    NekDouble Umin, NekDouble Usup,

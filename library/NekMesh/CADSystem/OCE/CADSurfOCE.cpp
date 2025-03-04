@@ -117,6 +117,28 @@ std::array<NekDouble, 6> CADSurfOCE::BoundingBox()
     return ret;
 }
 
+std::array<NekDouble, 6> CADSurfOCE::BoundingBox(NekDouble scale)
+{
+    BRepMesh_IncrementalMesh brmsh(m_shape, 0.005*scale);
+
+    Bnd_Box B;
+    BRepBndLib::Add(m_shape, B);
+    NekDouble e = sqrt(B.SquareExtent()) * 0.01;
+    e           = min(e, 5e-3*scale);
+    B.Enlarge(e);
+
+    std::array<NekDouble, 6> ret;
+    B.Get(ret[0], ret[1], ret[2], ret[3], ret[4], ret[5]);
+    ret[0] /= 1000.0;
+    ret[1] /= 1000.0;
+    ret[2] /= 1000.0;
+    ret[3] /= 1000.0;
+    ret[4] /= 1000.0;
+    ret[5] /= 1000.0;
+
+    return ret;
+}
+
 std::array<NekDouble, 2> CADSurfOCE::locuv(std::array<NekDouble, 3> p,
                                            NekDouble &dist)
 {
