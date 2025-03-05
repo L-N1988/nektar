@@ -224,6 +224,12 @@ public:
      */
     NEKMESH_EXPORT virtual std::array<NekDouble, 3> N(NekDouble t) = 0;
 
+    /**
+     * @brief Returns the bounding box of a curve enlarged by 5e-3mm * scale
+     */
+    NEKMESH_EXPORT virtual std::array<NekDouble, 6> BoundingBox(
+        NekDouble scale) = 0;
+
 protected:
     /// Length of edge
     NekDouble m_length;
