@@ -123,7 +123,7 @@ std::array<NekDouble, 6> CADSurfOCE::BoundingBox(NekDouble scale)
 
     Bnd_Box B;
     BRepBndLib::Add(m_shape, B);
-    NekDouble e = sqrt(B.SquareExtent()) * 0.01;
+    NekDouble e = sqrt(B.SquareExtent()) * 0.01 * scale;
     e           = min(e, 5e-3*scale);
     B.Enlarge(e);
 
