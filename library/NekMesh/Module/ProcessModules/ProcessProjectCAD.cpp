@@ -289,14 +289,19 @@ void ProcessProjectCAD::Process()
     // 2. Create Bounding boxes of the CAD surfaces into a k-d tree
     NekDouble scale = cLength;
     bgi::rtree<boxI, bgi::quadratic<16>> rtree;
-    CreateBoundingBoxes(rtree, scale);
+    bgi::rtree<boxI, bgi::quadratic<16>> rtreeCurve;
+    bgi::rtree<boxI, bgi::quadratic<16>> rtreeNode;
+    CreateBoundingBoxes(rtree, rtreeCurve, rtreeNode, scale);
 
+    m_log(VERBOSE) << "Bounding Boxes Surf/Curv/Vertex= " << rtree.size() << " "
+                   << rtreeCurve.size() << " " << rtreeNode.size() << endl;
     // 3. Auxilaries ( can be moved to Module.cpp)
     // SurfNodes , surfNodeToEl, minConEdge
     Auxilaries();
 
     // 4.  Link Surface Vertices to CAD and Project them to the closest CAD
-    LinkVertexToCAD(m_mesh, true, lockedNodes, tolv1, tolv2, rtree);
+    LinkVertexToCAD(m_mesh, false, lockedNodes, tolv1, tolv2, rtree, rtreeCurve,
+                    rtreeNode);
 
     // 5. clear the associations with CAD surfaces
     // necessary since the projection of the edges will change the surface uv
@@ -309,8 +314,9 @@ void ProcessProjectCAD::Process()
 
     // 6. Update the secondary tolerances on already projected nodes and do the
     //  final Linking Vertex - CAD Surface / Curve
-    tolv1, tolv2 = 1e-9, 1e-8;
-    LinkVertexToCAD(m_mesh, false, lockedNodes, tolv1, tolv2, rtree);
+    tolv1 = 1e-9, tolv2 = 1e-8;
+    LinkVertexToCAD(m_mesh, true, lockedNodes, tolv1, tolv2, rtree, rtreeCurve,
+                    rtreeNode);
 
     // // 7. Associate Edges to CAD
     LinkEdgeToCAD(surfEdges, tolv1);
@@ -434,8 +440,11 @@ void ProcessProjectCAD::Auxilaries()
 }
 
 void ProcessProjectCAD::CreateBoundingBoxes(
-    bgi::rtree<boxI, bgi::quadratic<16>> &rtree, NekDouble scale)
+    bgi::rtree<boxI, bgi::quadratic<16>> &rtreeSurf,
+    bgi::rtree<boxI, bgi::quadratic<16>> &rtreeCurve,
+    bgi::rtree<boxI, bgi::quadratic<16>> &rtreeNode, NekDouble scale)
 {
+    // CAD Surfs
     vector<boxI> boxes;
     for (int i = 1; i <= m_mesh->m_cad->GetNumSurf(); i++)
     {
@@ -451,8 +460,34 @@ void ProcessProjectCAD::CreateBoundingBoxes(
     }
 
     m_log(VERBOSE).Newline();
-    m_log(VERBOSE) << "Building admin data structures." << endl;
-    rtree.insert(boxes.begin(), boxes.end());
+    m_log(VERBOSE) << "Building Surf admin data structures." << endl;
+    rtreeSurf.insert(boxes.begin(), boxes.end());
+    m_log(VERBOSE) << "Bounding Box ." << endl;
+
+    // CAD Curves
+    boxes.clear();
+    for (int i = 1; i <= m_mesh->m_cad->GetNumCurve(); i++)
+    {
+        auto bx = m_mesh->m_cad->GetCurve(i)->BoundingBox(scale);
+
+        boxes.push_back(make_pair(
+            box(point(bx[0], bx[1], bx[2]), point(bx[3], bx[4], bx[5])), i));
+    }
+    rtreeCurve.insert(boxes.begin(), boxes.end());
+
+    // CAD Vertices
+    boxes.clear();
+    NekDouble tol = 1e-8 * scale; // 1e-8 * scale
+    for (int i = 1; i <= m_mesh->m_cad->GetNumVerts(); i++)
+    {
+        auto vert                     = m_mesh->m_cad->GetVert(i);
+        std::array<NekDouble, 3> locT = vert->GetLoc();
+        boxes.push_back(
+            make_pair(box(point(locT[0] - tol, locT[1] - tol, locT[2] - tol),
+                          point(locT[0] + tol, locT[1] + tol, locT[2] + tol)),
+                      i));
+    }
+    rtreeNode.insert(boxes.begin(), boxes.end());
 }
 
 void ProcessProjectCAD::CalculateMinEdgeLength()
@@ -497,9 +532,11 @@ void ProcessProjectCAD::CalculateMinEdgeLength()
 }
 
 void ProcessProjectCAD::LinkVertexToCAD(
-    NekMesh::MeshSharedPtr &m_mesh, bool projectVertex, NodeSet &lockedNodes,
+    NekMesh::MeshSharedPtr &m_mesh, bool CADCurve, NodeSet &lockedNodes,
     NekDouble tolv1, NekDouble tolv2,
-    bgi::rtree<boxI, bgi::quadratic<16>> &rtree)
+    bgi::rtree<boxI, bgi::quadratic<16>> &rtree,
+    bgi::rtree<boxI, bgi::quadratic<16>> &rtreeCurve,
+    bgi::rtree<boxI, bgi::quadratic<16>> &rtreeNode)
 {
     map<int, vector<int>> finds;
 
@@ -655,6 +692,61 @@ void ProcessProjectCAD::LinkVertexToCAD(
         }
     }
 
+    // for the vertices with multiple CAD Surfaces, check CADCurves with the
+    // bounding boxes Intersect with CAD Curves rtree
+    if (CADCurve)
+    {
+        for (auto vertex : surfNodes)
+        {
+            if (vertex->GetCADSurfs().size() > 2)
+            {
+                point point((vertex)->m_x, (vertex)->m_y, (vertex)->m_z);
+                vector<boxI> result;
+                rtreeNode.query(bgi::intersects(point), back_inserter(result));
+
+                if (result.size() == 1)
+                {
+                    // Single CAD Vertex
+                    vertex->SetCADVertex(m_mesh->m_cad->GetVert(
+                        result[0].second)); // No Adj Curves Assigned to the V !
+                }
+                else
+                {
+                    // Multiple CAD Vertices
+                    m_log(WARNING) << "Multiple CAD Vertices found for the "
+                                   << "vertex " << vertex << endl;
+                }
+            }
+            else if(vertex->GetCADSurfs().size() == 2)
+            {
+                point point((vertex)->m_x, (vertex)->m_y, (vertex)->m_z);
+                vector<boxI> result;
+                rtreeCurve.query(bgi::intersects(point), back_inserter(result));
+
+                if(result.size()==1)
+                {
+                    // Single CAD Curve
+                    CADCurveSharedPtr CADCurve_t = m_mesh->m_cad->GetCurve(result[0].second);
+                    NekDouble t0, t1, dist0, dist1;
+                    NekDouble tmin, tmax;
+                    CADCurve_t->GetBounds(tmin, tmax);
+    
+                    dist0 = CADCurve_t->loct(vertex->GetLoc(), t0, tmin, tmax);
+                    if(dist0 < tolv1)
+                    {
+                        vertex->SetCADCurve(CADCurve_t, t0 ); 
+                    }
+                }
+                else
+                {
+                    m_log(WARNING) << "Multiple CAD Curves found for the "
+                                   << "vertex " << vertex << endl;
+                }
+                
+            }
+        }
+    }
+
     m_log(VERBOSE) << "  - max surface Vertex correction " << maxNodeCor
                    << endl;
     m_log(VERBOSE) << "  - lockedNodes N= " << lockedNodes.size() << endl;
@@ -678,7 +770,8 @@ void ProcessProjectCAD::LinkEdgeToCAD(EdgeSet &surfEdges, NekDouble tolv1)
         if (cmn.size() == 0)
         {
             // no CAD surface found for the edge (CASE3)
-            // cout << "Case 3 edge association " << endl ;
+            // cout << "Case 3 edge association v1 = " << v1 << "  = v2 " << v2
+            //<< endl;
             continue;
         }
 
@@ -1234,8 +1327,9 @@ void ProcessProjectCAD::Diagnostics()
             }
         }
 
-        // Vertices without CAD
+        // Vertices CAD
         int cntCAD2 = 0, cntCAD1 = 0, cntCAD3orMore = 0;
+        int cntCADVertices = 0 , cntCADCurves = 0;
         for (auto vertex : surfNodes)
         {
             if (vertex->GetCADSurfs().size() == 0 &&
@@ -1258,6 +1352,15 @@ void ProcessProjectCAD::Diagnostics()
             {
                 cntCAD3orMore++;
             }
+
+            if (vertex->GetCADVertex() != NULL)
+            {
+                cntCADVertices++;
+            }
+            if(vertex->GetCADCurves().size() > 0)
+            {
+                cntCADCurves++;
+            }
         }
 
         // Surface Edges without CAD
@@ -1277,6 +1380,10 @@ void ProcessProjectCAD::Diagnostics()
                        << endl;
         m_log(VERBOSE) << "Vertices CAD3 or more Surf            N= "
                        << cntCAD3orMore << endl;
+        m_log(VERBOSE) << "Vertices- CADVertex (also have CADSu) N= "
+                       << cntCADVertices << endl;
+        m_log(VERBOSE) << "Vertices- CADCurve                    N= "
+                       << cntCADCurves << endl;
         m_log(VERBOSE) << "Edges CADCurve                        N= "
                        << cntEdgeCurve << endl;
         m_log(VERBOSE) << "Edges CADSurf                         N= "
@@ -1291,7 +1398,7 @@ void ProcessProjectCAD::LinkFaceToCAD()
         vector<NodeSharedPtr> vertices = element->GetVertexList();
         vector<EdgeSharedPtr> edges    = element->GetEdgeList();
 
-        // CASE1 - all edges internal to same CADSurf
+        // CASE1 - all Edges internal to same CADSurf
         bool internal = true;
         for (int i = 1; i < edges.size(); i++)
         {
@@ -1322,6 +1429,7 @@ void ProcessProjectCAD::LinkFaceToCAD()
         if (cmn.size() == 0)
         {
             // CASE 3
+            // cout << "face cmn.size() = 0 " << endl;
             continue;
         }
 
@@ -1353,6 +1461,7 @@ void ProcessProjectCAD::LinkFaceToCAD()
         {
             // CASE 2 - 2 or more CADSurfs
             // Project the face
+            cout << " face cmn.size() = " << commonCAD.size() << endl;
         }
     }
 

@@ -88,14 +88,18 @@ private:
     NodeSet lockedNodes;
 
     void LoadCAD(std::string filename);
-    void CreateBoundingBoxes(bgi::rtree<boxI, bgi::quadratic<16>> &rtree, NekDouble scale);
+    void CreateBoundingBoxes(bgi::rtree<boxI, bgi::quadratic<16>> &rtree,
+                             bgi::rtree<boxI, bgi::quadratic<16>> &rtreeCurve,
+                             bgi::rtree<boxI, bgi::quadratic<16>> &rtreeNode,
+                             NekDouble scale);
     bool IsNotValid(std::vector<NekMesh::ElementSharedPtr> &els);
     void CalculateMinEdgeLength();
     void Auxilaries();
-    void LinkVertexToCAD(NekMesh::MeshSharedPtr &m_mesh, bool projectVertex,
+    void LinkVertexToCAD(NekMesh::MeshSharedPtr &m_mesh, bool CADCurve,
                          NodeSet &lockedNodes, NekDouble tolv1, NekDouble tolv2,
-                         bgi::rtree<boxI, bgi::quadratic<16>> &rtree);
-
+                         bgi::rtree<boxI, bgi::quadratic<16>> &rtree,
+                         bgi::rtree<boxI, bgi::quadratic<16>> &rtreeCurve,
+                         bgi::rtree<boxI, bgi::quadratic<16>> &rtreeNode);
 
     bool FindAndProject(bgi::rtree<boxI, bgi::quadratic<16>> &rtree,
                         std::array<NekDouble, 3> &in, int &surf);
@@ -106,7 +110,7 @@ private:
     void ProjectEdges(EdgeSet &surfEdges, int order,
                       bgi::rtree<boxI, bgi::quadratic<16>> &rtree);
     std::vector<int> IntersectCADSurf(std::vector<CADSurfSharedPtr> v1_CADs,
-    std::vector<CADSurfSharedPtr> v2_CADs) ;
+                                      std::vector<CADSurfSharedPtr> v2_CADs);
 
     void Diagnostics();
     void ExportCAD();
