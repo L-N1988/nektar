@@ -327,9 +327,7 @@ void HOSurfaceMesh::Process()
 
                 // To Do : Check if CADSurf is the same as surf (face CADSurf)
                 // if not, then it is CASE3 (robustness !)
-
-                auto uvb = e->m_n1->GetCADSurfInfo(surf);
-                auto uve = e->m_n2->GetCADSurfInfo(surf);
+                std::array<Nektar::NekDouble, 2UL> uvb, uve;
 
                 if (m_config["third_party"].beenSet)
                 {
@@ -341,6 +339,11 @@ void HOSurfaceMesh::Process()
                                    Vsup);
                     uve = s->locuv(e->m_n2->GetLoc(), dist, Umin, Usup, Vmin,
                                    Vsup);
+                }
+                else
+                {
+                    uvb = e->m_n1->GetCADSurfInfo(surf);
+                    uve = e->m_n2->GetCADSurfInfo(surf);
                 }
 
                 e->m_parentCAD = s;
