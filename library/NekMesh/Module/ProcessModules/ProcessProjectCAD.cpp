@@ -65,7 +65,7 @@ ProcessProjectCAD::ProcessProjectCAD(MeshSharedPtr m) : ProcessModule(m)
 {
     m_config["file"]  = ConfigOption(false, "", "CAD file");
     m_config["order"] = ConfigOption(false, "4", "Enforce a polynomial order");
-    m_config["surfopti"] = ConfigOption(true, "1", "Run HO-Surface Module");
+    m_config["surfopti"] = ConfigOption(false, "1", "Run HO-Surface Module");
     m_config["varopti"] =
         ConfigOption(false, "0", "Run the Variational Optmiser");
     m_config["cLength"] =
@@ -98,6 +98,11 @@ bool ProcessProjectCAD::FindAndProject(
                           "Bounding boxes - No projection! "
                        << endl;
         return false;
+    }
+    else
+    {
+        cout << "FindAndProject() - Edge node found in " << result.size()
+             << " bounding boxes" << endl;
     }
 
     int minsurf       = 0;
@@ -269,9 +274,10 @@ void ProcessProjectCAD::Process()
 
     // Characteristic Length for CAD Reconstruction (auto calculation of tolv1
     // and tolv2)
+    NekDouble cLength = 1.0;
     if (m_config["cLength"].beenSet)
     {
-        NekDouble cLength = m_config["cLength"].as<NekDouble>();
+        cLength = m_config["cLength"].as<NekDouble>();
         tolv1 *= cLength;
         tolv2 *= cLength;
     }
@@ -281,8 +287,9 @@ void ProcessProjectCAD::Process()
     LoadCAD(filename);
 
     // 2. Create Bounding boxes of the CAD surfaces into a k-d tree
+    NekDouble scale = cLength;
     bgi::rtree<boxI, bgi::quadratic<16>> rtree;
-    CreateBoundingBoxes(rtree);
+    CreateBoundingBoxes(rtree, scale);
 
     // 3. Auxilaries ( can be moved to Module.cpp)
     // SurfNodes , surfNodeToEl, minConEdge
@@ -306,27 +313,25 @@ void ProcessProjectCAD::Process()
     LinkVertexToCAD(m_mesh, false, lockedNodes, tolv1, tolv2, rtree);
 
     // // 7. Associate Edges to CAD
-    LinkEdgeToCAD(surfEdges);
+    LinkEdgeToCAD(surfEdges, tolv1);
 
     // // 8. Associate Faces to CAD
     LinkFaceToCAD();
 
-    // // 9. Validate CAD Faces vs Edges
-    //
-
-
     // Project the Edges to CAD that
-    ProjectEdges(surfEdges, order, rtree);
+    // ProjectEdges(surfEdges, order, rtree);
 
+    Diagnostics();
 
     ////**** HOSurface ****////
-    int m_surfopti = m_config["surfopti"].as<bool>();
+    int m_surfopti         = m_config["surfopti"].as<bool>();
     ModuleSharedPtr module = GetModuleFactory().CreateInstance(
         ModuleKey(eProcessModule, "hosurface"), m_mesh);
     module->SetLogger(m_log);
-    if (m_surfopti==1)
+    if (m_surfopti == 1)
     {
-        module->RegisterConfig("opti","");
+        //        module->RegisterConfig("opti","");
+        module->RegisterConfig("third_party", "");
 
         try
         {
@@ -335,21 +340,20 @@ void ProcessProjectCAD::Process()
         }
         catch (runtime_error &e)
         {
-            m_log(WARNING) << "High-order surface meshing has failed with message:"
-                        << endl;
+            m_log(WARNING)
+                << "High-order surface meshing has failed with message:"
+                << endl;
             m_log(WARNING) << e.what() << endl;
             m_log(WARNING) << "The mesh will be written as normal but the "
-                        << "incomplete surface will remain faceted"
-                        << endl;
+                           << "incomplete surface will remain faceted" << endl;
             return;
         }
     }
-    
+
     Diagnostics();
     // ExportCAD();
 
     m_log(VERBOSE) << "HO-Surface CAD complete." << endl;
-
 }
 
 void ProcessProjectCAD::LoadCAD(std::string filename)
@@ -430,14 +434,14 @@ void ProcessProjectCAD::Auxilaries()
 }
 
 void ProcessProjectCAD::CreateBoundingBoxes(
-    bgi::rtree<boxI, bgi::quadratic<16>> &rtree)
+    bgi::rtree<boxI, bgi::quadratic<16>> &rtree, NekDouble scale)
 {
     vector<boxI> boxes;
     for (int i = 1; i <= m_mesh->m_cad->GetNumSurf(); i++)
     {
         // m_log(VERBOSE).Progress(i, m_mesh->m_cad->GetNumSurf(),
         //                         "building surface bboxes", i - 1);
-        auto bx = m_mesh->m_cad->GetSurf(i)->BoundingBox();
+        auto bx = m_mesh->m_cad->GetSurf(i)->BoundingBox(scale);
         boxes.push_back(make_pair(
             box(point(bx[0], bx[1], bx[2]), point(bx[3], bx[4], bx[5])), i));
 
@@ -591,7 +595,7 @@ void ProcessProjectCAD::LinkVertexToCAD(
                 }
                 if (m_mesh->m_cad->GetSurf(distId[j])->IsPlanar())
                 {
-                    //continue;
+                    // continue;
                 }
 
                 shift                     = distList[j];
@@ -638,7 +642,7 @@ void ProcessProjectCAD::LinkVertexToCAD(
                 }
                 if (m_mesh->m_cad->GetSurf(distId[j])->IsPlanar())
                 {
-                    //continue;
+                    // continue;
                 }
 
                 CADSurfSharedPtr s = m_mesh->m_cad->GetSurf(distId[j]);
@@ -651,12 +655,14 @@ void ProcessProjectCAD::LinkVertexToCAD(
         }
     }
 
-    m_log(VERBOSE) << "  - max surface Vertex correction " << maxNodeCor << endl;
+    m_log(VERBOSE) << "  - max surface Vertex correction " << maxNodeCor
+                   << endl;
+    m_log(VERBOSE) << "  - lockedNodes N= " << lockedNodes.size() << endl;
 }
 
-void ProcessProjectCAD::LinkEdgeToCAD(EdgeSet &surfEdges)
+void ProcessProjectCAD::LinkEdgeToCAD(EdgeSet &surfEdges, NekDouble tolv1)
 {
-    for(auto edge : surfEdges)
+    for (auto edge : surfEdges)
     {
         NodeSharedPtr v1 = edge->m_n1;
         NodeSharedPtr v2 = edge->m_n2;
@@ -666,12 +672,13 @@ void ProcessProjectCAD::LinkEdgeToCAD(EdgeSet &surfEdges)
             continue;
         }
 
-        vector<int> cmn = IntersectCADSurf(v1->GetCADSurfs(), v2->GetCADSurfs());
+        vector<int> cmn =
+            IntersectCADSurf(v1->GetCADSurfs(), v2->GetCADSurfs());
 
         if (cmn.size() == 0)
         {
             // no CAD surface found for the edge (CASE3)
-            cout << "Case 3 edge" << endl ;  
+            // cout << "Case 3 edge association " << endl ;
             continue;
         }
 
@@ -680,35 +687,309 @@ void ProcessProjectCAD::LinkEdgeToCAD(EdgeSet &surfEdges)
             // Clearly Edge is on a single CAD surface (internal)
             edge->m_parentCAD = m_mesh->m_cad->GetSurf(cmn[0]);
         }
-        else if(cmn.size() == 2 )
+        else if (cmn.size() == 2)
         {
-            // cout <<cmn.size() << " CAD surfaces found for the edge" << endl ;
-
             // Could be CAD-curve or CAD-surface (CASE2)
             vector<CADSurfSharedPtr> v1_CAD = v1->GetCADSurfs();
             vector<CADSurfSharedPtr> v2_CAD = v2->GetCADSurfs();
 
+            // Associate to the closest CAD Surface
 
-            // for(int i = 0; i < cmn.size(); i++)
-            // {
-            //     CADSurfSharedPtr surf = m_mesh->m_cad->GetSurf(cmn[i]);
-                
-            //     // if (m_mesh->m_cad->GetSurf(cmn[i])->IsPlanar())
-            //     // {
-            //     //     edge->m_parentCAD = m_mesh->m_cad->GetSurf(cmn[i]);
-            //     //     conitnue ; 
-            //     // }
-            // }
+            // 1.Create vi1 , vi2
+            vector<int> CADCurves_uv1;
+            vector<int> CADCurves_uv2;
+
+            CADSurfSharedPtr EdgeSurf1 = m_mesh->m_cad->GetSurf(cmn[0]);
+            CADSurfSharedPtr EdgeSurf2 = m_mesh->m_cad->GetSurf(cmn[1]);
+
+            for (auto EdgeLoop : EdgeSurf1->GetEdges())
+            {
+                for (auto CADCurve : EdgeLoop->edges)
+                {
+                    CADCurves_uv1.push_back(CADCurve->GetId());
+                }
+            }
+            for (auto EdgeLoop : EdgeSurf2->GetEdges())
+            {
+                for (auto CADCurve : EdgeLoop->edges)
+                {
+                    CADCurves_uv2.push_back(CADCurve->GetId());
+                }
+            }
+
+            sort(CADCurves_uv1.begin(), CADCurves_uv1.end());
+            sort(CADCurves_uv2.begin(), CADCurves_uv2.end());
+
+            vector<int> commonCADCurves;
+            set_intersection(CADCurves_uv1.begin(), CADCurves_uv1.end(),
+                             CADCurves_uv2.begin(), CADCurves_uv2.end(),
+                             back_inserter(commonCADCurves));
+
+            NekDouble tolDist = tolv1; // POSSIBLE PROBLEM !!!!
+            if (commonCADCurves.size() == 1)
+            {
+                CADCurveSharedPtr CADCurve_t =
+                    m_mesh->m_cad->GetCurve(commonCADCurves[0]);
+
+                NekDouble t0, t1, dist0, dist1;
+                NekDouble tmin, tmax;
+                CADCurve_t->GetBounds(tmin, tmax);
+
+                dist0 = CADCurve_t->loct(edge->m_n1->GetLoc(), t0, tmin, tmax);
+                dist1 = CADCurve_t->loct(edge->m_n2->GetLoc(), t1, tmin, tmax);
+
+                if ((dist0 < tolDist) && (dist1 < tolDist))
+                {
+                    edge->m_n1->SetCADCurve(CADCurve_t, t0);
+                    edge->m_n2->SetCADCurve(CADCurve_t, t1);
+                    edge->m_parentCAD = CADCurve_t;
+                }
+                else
+                {
+                    m_log(VERBOSE)
+                        << " dist > distol (cmnCADCurve.size=1) = " << dist0
+                        << " " << dist1 << endl;
+                }
+                /*
+                                        if((dist0 < tolDist) && (dist1 <
+                    tolDist) )
+                                        {
+                                            //edge->m_n1->SetCADCurve(CADCurve_t,t0);
+                                            edge->m_n2->SetCADCurve(CADCurve_t,t1);
+
+                                            // IF USE GetMinDist -> Does
+                    not give the correct distance to the vertex in case t
+                    outside of curve [t_min t_max] bonds
+
+                                            // vertex 1
+                                            if(t0 >= tmin - tolDist &&
+                    t0 <= tmax + tolDist )
+                                            {
+                                                edge->m_n1->SetCADCurve(CADCurve_t,t0);
+                                            }
+                                            else if( (t0 > tmin) && (t0
+                    < tmax + tolDist))
+                                            {
+                                                // this is necessary to
+                    accomodate for Vertices generated in StarCCM which
+                    are slightly further away
+                                                // Alternatively one can
+                    project all vertices on the m_log(WARNING) <<
+                    "Parametric m_n1 on CADCurve has been manually to
+                    curve t_max " <<  endl ;
+                                                edge->m_n1->SetCADCurve(CADCurve_t,tmax);
+                                            }
+                                            else if( (t0 > tmin-
+                    tolDist) && (t0 < tmax ))
+                                            {
+                                                // this is necessary to
+                    accomodate for Vertices generated in StarCCM which
+                    are slightly further away
+                                                // Alternatively one can
+                    project all vertices on the m_log(WARNING) <<
+                    "Parametric m_n1 on CADCurve has been manually to
+                    curve tmin " <<  endl ;
+                                                edge->m_n1->SetCADCurve(CADCurve_t,tmin);
+                                            }
+                                            else
+                                            {
+                                                    edge->m_parentCAD =
+                    NULL ; m_log(WARNING) <<  "Parametric m_n1 on
+                    CADCurve cmn=1 has been too far away from the Curve
+                    Bounds " <<  endl ;
+                                            }
+
+                                            // // vertex 2
+                                            if(t1 >= tmin - tolDist &&
+                    t1 <= tmax + tolDist )
+                                            {
+                                                edge->m_n2->SetCADCurve(CADCurve_t,t1);
+                                            }
+                                            else if( (t1 > tmin) && (t1
+                    < tmax + tolDist))
+                                            {
+                                                // this is necessary to
+                    accomodate for Vertices generated in StarCCM which
+                    are slightly further away
+                                                // Alternatively one can
+                    project all vertices on the m_log(WARNING) <<
+                    "Parametric m_n2 on CADCurve has been manually to
+                    curve t_max " <<  endl ;
+                                                edge->m_n2->SetCADCurve(CADCurve_t,tmax);
+                                            }
+                                            else if( (t1 > tmin-
+                    tolDist) && (t1 < tmax ))
+                                            {
+                                                // this is necessary to
+                    accomodate for Vertices generated in StarCCM which
+                    are slightly further away
+                                                // Alternatively one can
+                    project all vertices on the m_log(WARNING) <<
+                    "Parametric m_n2 on CADCurve has been manually to
+                    curve tmin " <<  endl ;
+                                                edge->m_n2->SetCADCurve(CADCurve_t,tmin);
+                                            }
+                                            else
+                                            {
+                                                edge->m_parentCAD = NULL
+                    ; m_log(WARNING) <<  "Parametric m_n2 on CADCurve
+                    cmn=1 has been too far away from the Curve Bounds "
+                    <<  endl ;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            cout << "dist of m_n1 to the
+                    2 CAD Curves " << dist0 << " " << dist1 << endl ;
+                                            m_log(WARNING) <<
+                    "CommonCADCurves =1 - The edge vertices are too far
+                    away from the CADCurve dist = " << dist0 << " " <<
+                    dist1 << endl ;
+                                        }
+                */
+            }
+            else if (commonCADCurves.size() == 2)
+            {
+                m_log(WARNING)
+                    << " CASE commonCADCurves.size()==2 for comn.size()  = 2 "
+                    << endl;
+                // // << endl ;
+                // Array<OneD, NekDouble> xyz1 = edge->m_n1->GetLoc();
+                // Array<OneD, NekDouble> xyz2 = edge->m_n2->GetLoc();
+
+                // CADCurveSharedPtr Curve_t0 =
+                //     m_mesh->m_cad->GetCurve(commonCADCurves[0]);
+                // CADCurveSharedPtr Curve_t1 =
+                //     m_mesh->m_cad->GetCurve(commonCADCurves[1]);
+
+                // NekDouble dist01, dist02, dist11, dist12, m_n1_t0,
+                //     m_n1_t1, m_n2_t0, m_n2_t1;
+                // // cout << "Initialization m_n1/2 t0/1 " << m_n1_t0 << "
+                // // " << m_n2_t0 << " " <<  m_n1_t1 <<" " <<  m_n2_t1 <<
+                // // endl;
+
+                // // NekDouble tmin0, tmax0, tmin1, tmax1;
+                // Array<OneD, NekDouble> tmin_max0 =
+                //     Curve_t0->GetBounds();
+                // Array<OneD, NekDouble> tmin_max1 =
+                //     Curve_t1->GetBounds();
+                // // cout << "tmin_max0 =  " << tmin_max0[0] << " " <<
+                // // tmin_max0[1] << endl ; cout << "tmin_max1 =  " <<
+                // // tmin_max1[0] << " " << tmin_max1[1] << endl ;
+
+                // dist01 = Curve_t0->loct(xyz1, m_n1_t0, tmin_max0[0],
+                //                         tmin_max0[1]);
+                // dist02 = Curve_t0->loct(xyz2, m_n2_t0, tmin_max0[0],
+                //                         tmin_max0[1]);
+
+                // dist11 = Curve_t1->loct(xyz1, m_n1_t1, tmin_max1[0],
+                //                         tmin_max1[1]);
+                // dist12 = Curve_t1->loct(xyz2, m_n2_t1, tmin_max1[0],
+                //                         tmin_max1[1]);
+
+                // // cout << "After Update : " << m_n1_t0 << " " <<
+                // // m_n2_t0 << " " << m_n1_t1 << " " << m_n2_t1 << endl ;
+
+                // // Just for V&V
+                // // NekDouble dist01_GetMinDistance=
+                // // Curve_t0->GetMinDistance(xyz1) ; NekDouble
+                // // dist02_GetMinDistance= Curve_t0->GetMinDistance(xyz2)
+                // // ; NekDouble dist11_GetMinDistance=
+                // // Curve_t1->GetMinDistance(xyz1) ; NekDouble
+                // // dist12_GetMinDistance= Curve_t1->GetMinDistance(xyz2)
+                // // ;
+
+                // // m_log(VERBOSE) <<" dist 01 "  << dist01 << " dist02 "
+                // // << dist02 << endl ; m_log(VERBOSE) << " GetMin "<<  "
+                // // dist 01 "  << dist01_GetMinDistance << " dist02 " <<
+                // // dist02_GetMinDistance << endl ; m_log(VERBOSE) <<"
+                // // dist 11 "  << dist11 << " dist12 " << dist12 << endl
+                // // ; m_log(VERBOSE) << " GetMin "<<  " dist 01 "  <<
+                // // dist11_GetMinDistance << " dist02 " <<
+                // // dist12_GetMinDistance << endl ;
+
+                // // if( (dist1 < tol)  ||  (dist0 < tol)  )
+                // NekDouble dist0 = (dist01 + dist02) / 2.0;
+                // NekDouble dist1 = (dist11 + dist12) / 2.0;
+                // if ((dist0 < tolDist || dist1 < tolDist))
+                // {
+                //     if (dist0 < dist1 &&
+                //         (m_n1_t0 > tmin_max0[0] - tolDist) &&
+                //         (m_n1_t0 < tmin_max0[1] + tolDist) &&
+                //         (m_n2_t0 > tmin_max0[0] - tolDist) &&
+                //         (m_n2_t0 < tmin_max0[1] + tolDist))
+                //     {
+                //         // m_log(VERBOSE)  << "CAD1" << endl ;
+                //         edge->m_parentCAD = Curve_t0;
+
+                //         edge->m_n1->SetCADCurve(Curve_t0, m_n1_t0);
+                //         edge->m_n2->SetCADCurve(Curve_t0, m_n2_t0);
+                //         // cout << "CADCurve 0 m_n1_t0= " <<
+                //         // edge->m_n1->GetCADCurveInfo(Curve_t0->GetId())
+                //         // << endl ; cout << "CADCurve 0 m_n2_t0= " <<
+                //         // edge->m_n2->GetCADCurveInfo(Curve_t0->GetId())
+                //         // << endl ;
+                //     }
+                //     else if (dist1 < dist0 &&
+                //                 (m_n1_t1 > tmin_max1[0] - tolDist) &&
+                //                 (m_n1_t1 < tmin_max1[1] + tolDist) &&
+                //                 (m_n2_t1 > tmin_max1[0] - tolDist) &&
+                //                 (m_n2_t1 < tmin_max1[1] + tolDist))
+                //     {
+                //         // m_log(VERBOSE) << "CAD2" << endl ;
+                //         edge->m_parentCAD = Curve_t1;
+                //         edge->m_n1->SetCADCurve(Curve_t1, m_n1_t1);
+                //         edge->m_n2->SetCADCurve(Curve_t1, m_n2_t1);
+                //         // cout << "CADCurve 1 m_n1_t1= " <<
+                //         // edge->m_n1->GetCADCurveInfo(Curve_t1->GetId())
+                //         // << endl ; cout << "CADCurve 1 m_n2_t1 " <<
+                //         // edge->m_n2->GetCADCurveInfo(Curve_t1->GetId())
+                //         // << endl ;
+                //     }
+                //     else
+                //     {
+                //         m_log(WARNING)
+                //             << "loct circle bug cmn.size()=2 " << endl;
+                //     }
+                // }
+                // else
+                // {
+                //     m_log(WARNING) << " dist 01 " << dist01
+                //                     << " dist02 " << dist02 << endl;
+                //     m_log(WARNING) << " dist 11 " << dist11
+                //                     << " dist12 " << dist12 << endl;
+
+                //     cout << "dist of m_n1 to the 2 CAD Curves " << dist0
+                //             << " " << dist1 << endl;
+                //     m_log(WARNING)
+                //         << "Cannot find close CADCurve in CornerCase "
+                //             "of Edge with 2 common curves"
+                //         << endl;
+                // }
+                // // cout << "end edge commonCADCurves.size()==2 " << endl
+                // // ;
+            }
+            else
+            {
+                // Associate to the closest CAD Surface
+                m_log(WARNING)
+                    << "too many common CADcurves for Edge association  "
+                       "(cmn>2) will use the element to associate. "
+                    << endl;
+            }
         }
         else
         {
-            // Associate to the closest CAD Surface 
+            // Associate to the closest CAD Surface
+            m_log(WARNING) << "too many common surfaces for Edge association  "
+                              "(cmn>2) will use the element to associate. "
+                           << endl;
         }
     }
 }
 
-vector<int> ProcessProjectCAD::IntersectCADSurf(vector<CADSurfSharedPtr> v1_CADs,
-                                         vector<CADSurfSharedPtr> v2_CADs)
+vector<int> ProcessProjectCAD::IntersectCADSurf(
+    vector<CADSurfSharedPtr> v1_CADs, vector<CADSurfSharedPtr> v2_CADs)
 {
     vector<CADSurfSharedPtr> v1 = v1_CADs;
     vector<CADSurfSharedPtr> v2 = v2_CADs;
@@ -729,7 +1010,7 @@ vector<int> ProcessProjectCAD::IntersectCADSurf(vector<CADSurfSharedPtr> v1_CADs
     vector<int> cmn;
     set_intersection(vi1.begin(), vi1.end(), vi2.begin(), vi2.end(),
                      back_inserter(cmn));
-    
+
     return cmn;
 }
 
@@ -738,7 +1019,6 @@ void ProcessProjectCAD::ProjectEdges(
 {
     m_log(VERBOSE) << " Projecting Edges to CAD (CASE3)" << endl;
     // Project the Edges to CAD
-    map<int, vector<int>> eds;
 
     LibUtilities::PointsKey ekey(order + 1,
                                  LibUtilities::eGaussLobattoLegendre);
@@ -746,22 +1026,25 @@ void ProcessProjectCAD::ProjectEdges(
     LibUtilities::PointsManager()[ekey]->GetPoints(gll);
 
     // make surface edges high-order
+    int cnt = 0;
     for (auto i = surfEdges.begin(); i != surfEdges.end(); i++)
     {
-        // IF the edge is already associated with a CAD surface, HOSurf will do the curving job
-        if((*i)->m_parentCAD)
+        // IF the edge is already associated with a CAD surface, HOSurf will do
+        // the curving job
+        if ((*i)->m_parentCAD)
         {
             continue;
         }
-
         if (lockedNodes.count((*i)->m_n1) || lockedNodes.count((*i)->m_n2))
         {
             continue;
         }
+        cnt++;
+
         vector<CADSurfSharedPtr> v1 = (*i)->m_n1->GetCADSurfs();
         vector<CADSurfSharedPtr> v2 = (*i)->m_n2->GetCADSurfs();
 
-        vector<int> vi1, vi2;
+        vector<int> vi1, vi2, vi1vi2;
         for (size_t j = 0; j < v1.size(); ++j)
         {
             vi1.push_back(v1[j]->GetId());
@@ -777,9 +1060,10 @@ void ProcessProjectCAD::ProjectEdges(
         vector<int> cmn;
         set_intersection(vi1.begin(), vi1.end(), vi2.begin(), vi2.end(),
                          back_inserter(cmn));
-        eds[cmn.size()].push_back(0);
 
         (*i)->m_curveType = LibUtilities::eGaussLobattoLegendre;
+
+        cout << "cmn.size() = " << cmn.size() << endl;
 
         if (cmn.size() == 1 || cmn.size() == 2)
         {
@@ -846,6 +1130,12 @@ void ProcessProjectCAD::ProjectEdges(
             // including the edge nodes, then,  in theory projection shouldnt be
             // used
 
+            vi1vi2.insert(vi1vi2.end(), vi1.begin(), vi1.end());
+            vi1vi2.insert(vi1vi2.end(), vi2.begin(), vi2.end());
+
+            cout << vi1vi2.size() << " CAD surfaces found for mn1 and mn2"
+                 << endl;
+            cout << (*i)->m_n1 << "    v2 " << (*i)->m_n2 << endl;
             set<int> sused;
             for (int k = 1; k < order + 1 - 1; k++)
             {
@@ -861,12 +1151,15 @@ void ProcessProjectCAD::ProjectEdges(
                 if (!FindAndProject(rtree, locT, s))
                 {
                     (*i)->m_edgeNodes.clear();
+                    m_log(VERBOSE) << "failed to find CAD" << endl;
                     break;
                 }
+
                 sused.insert(s);
 
                 if (sused.size() > 2)
                 {
+                    m_log(WARNING) << "found too many CAD " << endl;
                     (*i)->m_edgeNodes.clear();
                     break;
                 }
@@ -878,102 +1171,190 @@ void ProcessProjectCAD::ProjectEdges(
             }
         }
     }
+    cout << "Cnt for projected edges = " << cnt << endl;
 }
 
 void ProcessProjectCAD::Diagnostics()
 {
-    m_log(VERBOSE) << endl <<  " ---------Diagnostics---------     " << endl << endl ;
-   
-    if(true)
+    m_log(VERBOSE) << endl
+                   << " ---------Diagnostics---------     " << endl
+                   << endl;
+
+    if (true)
     {
-        long int counterElementsNoCAD=0 ; 
-        long int counterEdgesNoCAD=0;
-        long int counterVerticesNoCAD=0 ; 
+        long int counterElementsNoCAD = 0;
+        long int counterEdgesNoCAD    = 0;
+        long int counterVerticesNoCAD = 0;
 
-        m_log(VERBOSE) << "         CAD Stats       "<< endl  ; 
-        m_log(VERBOSE) << "CAD Vertices =           " << m_mesh->m_cad->GetNumVerts() << endl  ; 
-        m_log(VERBOSE) << "CAD Curves =             " << m_mesh->m_cad->GetNumCurve() << endl  ; 
-        m_log(VERBOSE) << "CAD Surfaces =           " << m_mesh->m_cad->GetNumSurf() << endl  ; 
+        m_log(VERBOSE) << "         CAD Stats       " << endl;
+        m_log(VERBOSE) << "CAD Vertices =           "
+                       << m_mesh->m_cad->GetNumVerts() << endl;
+        m_log(VERBOSE) << "CAD Curves =             "
+                       << m_mesh->m_cad->GetNumCurve() << endl;
+        m_log(VERBOSE) << "CAD Surfaces =           "
+                       << m_mesh->m_cad->GetNumSurf() << endl;
 
-        m_log(VERBOSE) << "        Mesh Stats       "<< endl  ; 
-        m_log(VERBOSE) << "Mesh Surface Vertices =  " << surfNodes.size() << endl  ; 
-        m_log(VERBOSE) << "Mesh Surface Edges =     " << surfEdges.size() << endl  ; 
-        m_log(VERBOSE) << "Mesh Surface Face =      " << m_mesh->m_element[2].size() << endl  ; 
-
+        m_log(VERBOSE) << "        Mesh Stats       " << endl;
+        m_log(VERBOSE) << "Mesh Surface Vertices =  " << surfNodes.size()
+                       << endl;
+        m_log(VERBOSE) << "Mesh Surface Edges =     " << surfEdges.size()
+                       << endl;
+        m_log(VERBOSE) << "Mesh Surface Face =      "
+                       << m_mesh->m_element[2].size() << endl;
 
         // Elements without CAD
-        EdgeSet NoCADEdges ;  
-        for(auto element : m_mesh->m_element[2])
+        EdgeSet NoCADEdges;
+        for (auto element : m_mesh->m_element[2])
         {
-            if(element->m_parentCAD==NULL)
+            if (element->m_parentCAD == NULL)
             {
-                counterElementsNoCAD++ ; 
-                //m_log(VERBOSE) << "Element No CAD Vertex1= " << element->GetVertex(0)->m_x <<" " <<  element->GetVertex(0)->m_y << " " << element->GetVertex(0)->m_z  << endl ;  
+                counterElementsNoCAD++;
+                // m_log(VERBOSE) << "Element No CAD Vertex1= " <<
+                // element->GetVertex(0)->m_x <<" " <<
+                // element->GetVertex(0)->m_y << " " <<
+                // element->GetVertex(0)->m_z  << endl ;
             }
         }
 
         // Edges without CAD
-        for(auto edge : surfEdges)
+        int cntEdgeCurve = 0, cntEdgeSurf = 0;
+        for (auto edge : surfEdges)
         {
-            if(edge->m_parentCAD==NULL)
+            if (edge->m_parentCAD == NULL)
             {
-                counterEdgesNoCAD++ ; 
+                counterEdgesNoCAD++;
+            }
+            else if (edge->m_parentCAD->GetType() == CADType::eCurve)
+            {
+                cntEdgeCurve++;
+            }
+            else
+            {
+                cntEdgeSurf++;
             }
         }
+
         // Vertices without CAD
-        for(auto vertex : surfNodes)
+        int cntCAD2 = 0, cntCAD1 = 0, cntCAD3orMore = 0;
+        for (auto vertex : surfNodes)
         {
-            if(vertex->GetCADSurfs().size() == 0 && vertex->GetCADCurves().size() == 0) 
+            if (vertex->GetCADSurfs().size() == 0 &&
+                vertex->GetCADCurves().size() == 0)
             {
-                counterVerticesNoCAD++ ; 
+                counterVerticesNoCAD++;
+            }
+
+            if (vertex->GetCADSurfs().size() == 1)
+            {
+                cntCAD1++;
+            }
+
+            if (vertex->GetCADSurfs().size() == 2)
+            {
+                cntCAD2++;
+            }
+
+            if (vertex->GetCADSurfs().size() > 2)
+            {
+                cntCAD3orMore++;
             }
         }
-        
-        // Surface Edges without CAD 
 
-        m_log(WARNING) << "Vertices No CAD (Includes PlanarSurf) N= " << counterVerticesNoCAD << endl;
-        //m_log(WARNING) << "Planar Vertices =                        " << planarCnt << endl;
-        m_log(WARNING) << "lockedNodes.size()                    N= " <<  lockedNodes.size()<< endl;
-        m_log(WARNING) << "Edges without CADObject               N= " << counterEdgesNoCAD << endl ; 
-        m_log(WARNING) << "Faces without CADObject               N= " << counterElementsNoCAD << endl ; 
+        // Surface Edges without CAD
 
+        m_log(WARNING) << "Vertices No CAD (Includes PlanarSurf) N= "
+                       << counterVerticesNoCAD << endl;
+        // m_log(WARNING) << "Planar Vertices =                        " <<
+        // planarCnt << endl;
+        m_log(WARNING) << "Edges without CADObject               N= "
+                       << counterEdgesNoCAD << endl;
+        m_log(WARNING) << "Faces without CADObject               N= "
+                       << counterElementsNoCAD << endl;
+
+        m_log(VERBOSE) << "Vertices 1 CADSurf                    N= " << cntCAD1
+                       << endl;
+        m_log(VERBOSE) << "Vertices 2 CADSurf                    N= " << cntCAD2
+                       << endl;
+        m_log(VERBOSE) << "Vertices CAD3 or more Surf            N= "
+                       << cntCAD3orMore << endl;
+        m_log(VERBOSE) << "Edges CADCurve                        N= "
+                       << cntEdgeCurve << endl;
+        m_log(VERBOSE) << "Edges CADSurf                         N= "
+                       << cntEdgeSurf << endl;
     }
-    
 }
-
-
 
 void ProcessProjectCAD::LinkFaceToCAD()
 {
-    for(auto element : m_mesh->m_element[2])
+    for (auto element : m_mesh->m_element[2])
     {
         vector<NodeSharedPtr> vertices = element->GetVertexList();
-        vector<EdgeSharedPtr> edges = element->GetEdgeList();
-        
+        vector<EdgeSharedPtr> edges    = element->GetEdgeList();
+
         // CASE1 - all edges internal to same CADSurf
-        bool internal = true ;
-        for(int i = 1; i < edges.size(); i++)
+        bool internal = true;
+        for (int i = 1; i < edges.size(); i++)
         {
-            if(edges[i]->m_parentCAD != edges[i-1]->m_parentCAD)
+            if (edges[i]->m_parentCAD != edges[i - 1]->m_parentCAD)
             {
-                internal = false ; 
+                internal = false;
                 break;
             }
         }
-        if(internal)
+        if (internal)
         {
             element->m_parentCAD = edges[0]->m_parentCAD;
-            continue ; 
+            continue;
         }
-       
-        // CASE2 - all vertices internal to same CADSurf
-                
 
-        // 
+        // CASE2 and CASE3 - 2 or more CADSurfs or None (Use vertice CAD)
+        vector<vector<int>> cmn;
+        for (int i = 1; i < vertices.size(); i++)
+        {
+            vector<int> cmn_i = IntersectCADSurf(
+                vertices[i]->GetCADSurfs(), vertices[i - 1]->GetCADSurfs());
+            if (cmn_i.size() > 0)
+            {
+                cmn.push_back(cmn_i);
+            }
+        }
 
-        
+        if (cmn.size() == 0)
+        {
+            // CASE 3
+            continue;
+        }
+
+        std::vector<int> commonCAD = cmn[0];
+        for (auto cmn_i : cmn)
+        {
+            std::sort(cmn_i.begin(), cmn_i.end());
+            std::vector<int> temp;
+            std::set_intersection(commonCAD.begin(), commonCAD.end(),
+                                  cmn_i.begin(), cmn_i.end(),
+                                  std::back_inserter(temp));
+            commonCAD = temp;
+        }
+
+        // commonCAD CADSurf found
+        if (commonCAD.size() == 1)
+        {
+            // Internal element based on the
+            element->m_parentCAD = m_mesh->m_cad->GetSurf(commonCAD[0]);
+            for (auto edge : edges)
+            {
+                if (edge->m_parentCAD == NULL)
+                {
+                    edge->m_parentCAD = m_mesh->m_cad->GetSurf(commonCAD[0]);
+                }
+            }
+        }
+        else
+        {
+            // CASE 2 - 2 or more CADSurfs
+            // Project the face
+        }
     }
-
 
     // // Identify CAD object for every boundary element based on the common
     // // CADobjects of the member vertices
@@ -1016,9 +1397,10 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //         sort(commonSurfacesEL.begin(), commonSurfacesEL.end());
 
     //         vector<int> cmn;
-    //         set_intersection(VertexCADSurfIDs.begin(), VertexCADSurfIDs.end(),
-    //                          commonSurfacesEL.begin(), commonSurfacesEL.end(),
-    //                          back_inserter(cmn));
+    //         set_intersection(VertexCADSurfIDs.begin(),
+    //         VertexCADSurfIDs.end(),
+    //                          commonSurfacesEL.begin(),
+    //                          commonSurfacesEL.end(), back_inserter(cmn));
     //         commonSurfacesEL = cmn;
     //         // m_log(VERBOSE) << " commonSurfacesEL.size =  " <<
     //         // commonSurfacesEL.size() << endl ;
@@ -1033,7 +1415,8 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //         // Internal or Corner to 1 NURB element!
     //         // Workflow - assign
 
-    //         // .2.1 Ideally - we have internal to the CADSurf vertex so assign
+    //         // .2.1 Ideally - we have internal to the CADSurf vertex so
+    //         assign
     //         // it to the CADSurf associated to it
     //         for (auto vertex : el->GetVertexList())
     //         {
@@ -1051,28 +1434,33 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //             }
     //         }
 
-    //         // .2.2 If no internal vertices (EX proximity or TE with only 1 Quad
+    //         // .2.2 If no internal vertices (EX proximity or TE with only 1
+    //         Quad
     //         // element - this becomes CASE2 always)
     //         if (!el->m_parentCAD)
     //         {
     //             if (el->GetShapeType() != 3)
     //             {
-    //                 // if a rectangular face - it should always have an internal
+    //                 // if a rectangular face - it should always have an
+    //                 internal
     //                 // to the face vertex
     //                 m_log(VERBOSE)
     //                     << " Face Shape Type = " << el->GetShapeType()
     //                     << "  EdgeList.size()= " << el->GetEdgeList().size()
     //                     << endl;
     //                 ;
-    //                 m_log(WARNING) << " NO Face internal vertices for a Quad "
+    //                 m_log(WARNING) << " NO Face internal vertices for a Quad
+    //                 "
     //                                   "element - EX:Proximity May need some "
     //                                   "further testing/development? "
     //                                << endl;
     //             }
-    //             el->m_parentCAD = m_mesh->m_cad->GetSurf(commonSurfacesEL[0]);
+    //             el->m_parentCAD =
+    //             m_mesh->m_cad->GetSurf(commonSurfacesEL[0]);
     //         }
 
-    //         // .2.3 Assign !!CADCurve!! not CADSURF!!! to Edges that are on the
+    //         // .2.3 Assign !!CADCurve!! not CADSURF!!! to Edges that are on
+    //         the
     //         // corner between two NNURBS -> its vertices have more than one
     //         // "common" CADSurf TestCase 1 - RING + TestCase2 -
     //         for (auto edge : el->GetEdgeList())
@@ -1104,7 +1492,8 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //             sort(vi2.begin(), vi2.end());
 
     //             vector<int> commonSurfacesEdge;
-    //             set_intersection(vi1.begin(), vi1.end(), vi2.begin(), vi2.end(),
+    //             set_intersection(vi1.begin(), vi1.end(), vi2.begin(),
+    //             vi2.end(),
     //                              back_inserter(commonSurfacesEdge));
 
     //             // .2.3.2 NB! Main CAD Curve reconstruction algorithm
@@ -1117,30 +1506,40 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //             else if (commonSurfacesEdge.size() == 2) // this might be 3 ?
     //             {
     //                 // Corner Edge -> !!!CAD CURVE procedure!!! INSTEAD of
-    //                 // CADSurf to avoid #bug 1(TestCASE 1-2 for junction betwen
+    //                 // CADSurf to avoid #bug 1(TestCASE 1-2 for junction
+    //                 betwen
     //                 // planar and NURBS surfaces)
     //                 if (edge->m_parentCAD)
     //                 {
-    //                     // cout << "Corner Edge has a parentCAD -> continue " <<
+    //                     // cout << "Corner Edge has a parentCAD -> continue "
+    //                     <<
     //                     // endl ;
     //                     continue;
     //                 }
-    //                 // m_log(WARNING) << "CORNER EDGE -> Curve Reconstruction "
+    //                 // m_log(WARNING) << "CORNER EDGE -> Curve Reconstruction
+    //                 "
     //                 // << endl ; m_log(VERBOSE) <<
-    //                 // "m_mesh->m_cad->GetSurf(commonSurfacesEdge[0])->GetEdges().size()
+    //                 //
+    //                 "m_mesh->m_cad->GetSurf(commonSurfacesEdge[0])->GetEdges().size()
     //                 // - EdgeLoops = " <<
-    //                 // m_mesh->m_cad->GetSurf(commonSurfacesEdge[0])->GetEdges().size()
+    //                 //
+    //                 m_mesh->m_cad->GetSurf(commonSurfacesEdge[0])->GetEdges().size()
     //                 // << endl ; m_log(VERBOSE) <<
-    //                 // "m_mesh->m_cad->GetSurf(commonSurfacesEdge[1])->GetEdges().size()
+    //                 //
+    //                 "m_mesh->m_cad->GetSurf(commonSurfacesEdge[1])->GetEdges().size()
     //                 // - EdgeLoops " <<
-    //                 // m_mesh->m_cad->GetSurf(commonSurfacesEdge[1])->GetEdges().size()
+    //                 //
+    //                 m_mesh->m_cad->GetSurf(commonSurfacesEdge[1])->GetEdges().size()
     //                 // << endl ;
 
-    //                 // m_log(VERBOSE) << "CADCurves per Surf1-> EdgeLoop[0] " <<
-    //                 // m_mesh->m_cad->GetSurf(commonSurfacesEdge[0])->GetEdges()[0]->edges.size()
+    //                 // m_log(VERBOSE) << "CADCurves per Surf1-> EdgeLoop[0] "
+    //                 <<
+    //                 //
+    //                 m_mesh->m_cad->GetSurf(commonSurfacesEdge[0])->GetEdges()[0]->edges.size()
     //                 // << endl ; m_log(VERBOSE) << "CADCurves per Surf2->
     //                 // EdgeLoop[0] " <<
-    //                 // m_mesh->m_cad->GetSurf(commonSurfacesEdge[1])->GetEdges()[0]->edges.size()
+    //                 //
+    //                 m_mesh->m_cad->GetSurf(commonSurfacesEdge[1])->GetEdges()[0]->edges.size()
     //                 // << endl ;
 
     //                 // 1.Create vi1 , vi2
@@ -1157,7 +1556,8 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //                     for (auto CADCurve : EdgeLoop->edges)
     //                     {
     //                         CADCurves_uv1.push_back(CADCurve->GetId());
-    //                         // cout << "Curves1 = " << CADCurve->GetId() << endl
+    //                         // cout << "Curves1 = " << CADCurve->GetId() <<
+    //                         endl
     //                         // ;
     //                     }
     //                 }
@@ -1166,7 +1566,8 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //                     for (auto CADCurve : EdgeLoop->edges)
     //                     {
     //                         CADCurves_uv2.push_back(CADCurve->GetId());
-    //                         // cout << "Curves2 = " << CADCurve->GetId() << endl
+    //                         // cout << "Curves2 = " << CADCurve->GetId() <<
+    //                         endl
     //                         // ;
     //                     }
     //                 }
@@ -1175,21 +1576,27 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //                 sort(CADCurves_uv2.begin(), CADCurves_uv2.end());
 
     //                 vector<int> commonCADCurves;
-    //                 set_intersection(CADCurves_uv1.begin(), CADCurves_uv1.end(),
-    //                                  CADCurves_uv2.begin(), CADCurves_uv2.end(),
+    //                 set_intersection(CADCurves_uv1.begin(),
+    //                 CADCurves_uv1.end(),
+    //                                  CADCurves_uv2.begin(),
+    //                                  CADCurves_uv2.end(),
     //                                  back_inserter(commonCADCurves));
 
     //                 NekDouble tolDist = 5e-5; // POSSIBLE PROBLEM !!!!
     //                 if (commonCADCurves.size() == 1)
     //                 {
-    //                     // m_log(WARNING) << " CASE commonCADCurves.size()==1"
+    //                     // m_log(WARNING) << " CASE
+    //                     commonCADCurves.size()==1"
     //                     // << endl ;
-    //                     //  m_log(VERBOSE) << "edge id = " << edge->m_id << endl
+    //                     //  m_log(VERBOSE) << "edge id = " << edge->m_id <<
+    //                     endl
     //                     //  ; m_log(VERBOSE) << "Vertex1  = " <<
     //                     //  edge->m_n1->GetLoc()[0] << ' ' <<
     //                     //  edge->m_n1->GetLoc()[1]  << " "<<
-    //                     //  edge->m_n1->GetLoc()[2]  << endl ; m_log(VERBOSE) <<
-    //                     //  "VErtex2  = " << edge->m_n2->GetLoc()[0] << ' ' <<
+    //                     //  edge->m_n1->GetLoc()[2]  << endl ; m_log(VERBOSE)
+    //                     <<
+    //                     //  "VErtex2  = " << edge->m_n2->GetLoc()[0] << ' '
+    //                     <<
     //                     //  edge->m_n2->GetLoc()[1]  << " "<<
     //                     //  edge->m_n2->GetLoc()[2]  << endl ;
 
@@ -1201,11 +1608,13 @@ void ProcessProjectCAD::LinkFaceToCAD()
 
     //                     // cout << "CAD VErtex 0 = "<<
     //                     // CADCurve_t->GetVertex()[0]->GetLoc()[0] << " "
-    //                     // <<CADCurve_t->GetVertex()[0]->GetLoc()[1]  << " " <<
+    //                     // <<CADCurve_t->GetVertex()[0]->GetLoc()[1]  << " "
+    //                     <<
     //                     // CADCurve_t->GetVertex()[0]->GetLoc()[2]  << endl ;
     //                     // cout << "CAD VErtex 1 = "<<
     //                     // CADCurve_t->GetVertex()[1]->GetLoc()[0] << " "
-    //                     // <<CADCurve_t->GetVertex()[1]->GetLoc()[1]  << " " <<
+    //                     // <<CADCurve_t->GetVertex()[1]->GetLoc()[1]  << " "
+    //                     <<
     //                     // CADCurve_t->GetVertex()[1]->GetLoc()[2]  << endl ;
     //                     edge->m_parentCAD = CADCurve_t;
 
@@ -1213,57 +1622,70 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //                     NekDouble tmin, tmax;
     //                     CADCurve_t->GetBounds(tmin, tmax);
 
-    //                     dist0 = CADCurve_t->loct(edge->m_n1->GetLoc(), t0, tmin,
+    //                     dist0 = CADCurve_t->loct(edge->m_n1->GetLoc(), t0,
+    //                     tmin,
     //                                              tmax);
-    //                     dist1 = CADCurve_t->loct(edge->m_n2->GetLoc(), t1, tmin,
+    //                     dist1 = CADCurve_t->loct(edge->m_n2->GetLoc(), t1,
+    //                     tmin,
     //                                              tmax);
     //                     boost::ignore_unused(dist0, dist1);
 
-    //                     // Array<OneD, NekDouble> xyz = edge->m_n1->GetLoc() ;
+    //                     // Array<OneD, NekDouble> xyz = edge->m_n1->GetLoc()
+    //                     ;
     //                     // NekDouble dist0_GetMinDistance=
     //                     // CADCurve_t->GetMinDistance(xyz) ; xyz =
     //                     // edge->m_n2->GetLoc() ; NekDouble
-    //                     // dist1_GetMinDistance= CADCurve_t->GetMinDistance(xyz)
+    //                     // dist1_GetMinDistance=
+    //                     CADCurve_t->GetMinDistance(xyz)
     //                     // ;
-    //                     // cout << "dist0 = " << dist0 << " dist1= " << dist1 <<
+    //                     // cout << "dist0 = " << dist0 << " dist1= " << dist1
+    //                     <<
     //                     // endl ;
     //                     // cout << "dist0 = " << dist0_GetMinDistance << "
     //                     // dist1= " << dist1_GetMinDistance << "GetMinDist"<<
     //                     // endl ; if(edge->m_id==796)
     //                     // {
-    //                     //      m_log(WARNING) << "t0 "  << t0 << " t1 " <<t1 <<
+    //                     //      m_log(WARNING) << "t0 "  << t0 << " t1 " <<t1
+    //                     <<
     //                     //      endl ;
     //                     // }
-    //                     // cout << "t0 = " << setprecision(10)  << t0 << " t1= "
+    //                     // cout << "t0 = " << setprecision(10)  << t0 << "
+    //                     t1= "
     //                     // << t1 << endl ; cout << "CAD tmin= " <<
     //                     // setprecision(10)  << tmin << " tmax= "<<  tmax <<
     //                     // endl ; NekDouble Tol_parametric =
     //                     // abs(CADCurve_t->GetTotLength())*1e-6;
 
     //                     /*
-    //                                             if((dist0 < tolDist) && (dist1 <
+    //                                             if((dist0 < tolDist) &&
+    //                                             (dist1 <
     //                        tolDist) )
     //                                             {
     //                                                 //edge->m_n1->SetCADCurve(CADCurve_t,t0);
     //                                                 edge->m_n2->SetCADCurve(CADCurve_t,t1);
 
-    //                                                 // IF USE GetMinDist -> Does
-    //                        not give the correct distance to the vertex in case t
-    //                        outside of curve [t_min t_max] bonds
+    //                                                 // IF USE GetMinDist ->
+    //                                                 Does
+    //                        not give the correct distance to the vertex in
+    //                        case t outside of curve [t_min t_max] bonds
 
     //                                                 // vertex 1
-    //                                                 if(t0 >= tmin - tolDist &&
+    //                                                 if(t0 >= tmin - tolDist
+    //                                                 &&
     //                        t0 <= tmax + tolDist )
     //                                                 {
     //                                                     edge->m_n1->SetCADCurve(CADCurve_t,t0);
     //                                                 }
-    //                                                 else if( (t0 > tmin) && (t0
+    //                                                 else if( (t0 > tmin) &&
+    //                                                 (t0
     //                        < tmax + tolDist))
     //                                                 {
-    //                                                     // this is necessary to
+    //                                                     // this is necessary
+    //                                                     to
     //                        accomodate for Vertices generated in StarCCM which
     //                        are slightly further away
-    //                                                     // Alternatively one can
+    //                                                     // Alternatively one
+    //                                                     can
     //                        project all vertices on the m_log(WARNING) <<
     //                        "Parametric m_n1 on CADCurve has been manually to
     //                        curve t_max " <<  endl ;
@@ -1272,10 +1694,12 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //                                                 else if( (t0 > tmin-
     //                        tolDist) && (t0 < tmax ))
     //                                                 {
-    //                                                     // this is necessary to
+    //                                                     // this is necessary
+    //                                                     to
     //                        accomodate for Vertices generated in StarCCM which
     //                        are slightly further away
-    //                                                     // Alternatively one can
+    //                                                     // Alternatively one
+    //                                                     can
     //                        project all vertices on the m_log(WARNING) <<
     //                        "Parametric m_n1 on CADCurve has been manually to
     //                        curve tmin " <<  endl ;
@@ -1285,23 +1709,27 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //                                                 {
     //                                                      edge->m_parentCAD =
     //                        NULL ; m_log(WARNING) <<  "Parametric m_n1 on
-    //                        CADCurve cmn=1 has been too far away from the Curve
-    //                        Bounds " <<  endl ;
+    //                        CADCurve cmn=1 has been too far away from the
+    //                        Curve Bounds " <<  endl ;
     //                                                 }
 
     //                                                 // // vertex 2
-    //                                                 if(t1 >= tmin - tolDist &&
+    //                                                 if(t1 >= tmin - tolDist
+    //                                                 &&
     //                        t1 <= tmax + tolDist )
     //                                                 {
     //                                                     edge->m_n2->SetCADCurve(CADCurve_t,t1);
     //                                                 }
-    //                                                 else if( (t1 > tmin) && (t1
+    //                                                 else if( (t1 > tmin) &&
+    //                                                 (t1
     //                        < tmax + tolDist))
     //                                                 {
-    //                                                     // this is necessary to
+    //                                                     // this is necessary
+    //                                                     to
     //                        accomodate for Vertices generated in StarCCM which
     //                        are slightly further away
-    //                                                     // Alternatively one can
+    //                                                     // Alternatively one
+    //                                                     can
     //                        project all vertices on the m_log(WARNING) <<
     //                        "Parametric m_n2 on CADCurve has been manually to
     //                        curve t_max " <<  endl ;
@@ -1310,10 +1738,12 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //                                                 else if( (t1 > tmin-
     //                        tolDist) && (t1 < tmax ))
     //                                                 {
-    //                                                     // this is necessary to
+    //                                                     // this is necessary
+    //                                                     to
     //                        accomodate for Vertices generated in StarCCM which
     //                        are slightly further away
-    //                                                     // Alternatively one can
+    //                                                     // Alternatively one
+    //                                                     can
     //                        project all vertices on the m_log(WARNING) <<
     //                        "Parametric m_n2 on CADCurve has been manually to
     //                        curve tmin " <<  endl ;
@@ -1321,26 +1751,30 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //                                                 }
     //                                                 else
     //                                                 {
-    //                                                     edge->m_parentCAD = NULL
+    //                                                     edge->m_parentCAD =
+    //                                                     NULL
     //                        ; m_log(WARNING) <<  "Parametric m_n2 on CADCurve
-    //                        cmn=1 has been too far away from the Curve Bounds "
+    //                        cmn=1 has been too far away from the Curve Bounds
+    //                        "
     //                        <<  endl ;
     //                                                 }
     //                                             }
     //                                             else
     //                                             {
-    //                                                 cout << "dist of m_n1 to the
+    //                                                 cout << "dist of m_n1 to
+    //                                                 the
     //                        2 CAD Curves " << dist0 << " " << dist1 << endl ;
     //                                                 m_log(WARNING) <<
-    //                        "CommonCADCurves =1 - The edge vertices are too far
-    //                        away from the CADCurve dist = " << dist0 << " " <<
-    //                        dist1 << endl ;
+    //                        "CommonCADCurves =1 - The edge vertices are too
+    //                        far away from the CADCurve dist = " << dist0 << "
+    //                        " << dist1 << endl ;
     //                                             }
     //                     */
     //                 }
     //                 else if (commonCADCurves.size() == 2)
     //                 {
-    //                     // m_log(WARNING) << " CASE commonCADCurves.size()==2"
+    //                     // m_log(WARNING) << " CASE
+    //                     commonCADCurves.size()==2"
     //                     // << endl ;
     //                     Array<OneD, NekDouble> xyz1 = edge->m_n1->GetLoc();
     //                     Array<OneD, NekDouble> xyz2 = edge->m_n2->GetLoc();
@@ -1352,8 +1786,10 @@ void ProcessProjectCAD::LinkFaceToCAD()
 
     //                     NekDouble dist01, dist02, dist11, dist12, m_n1_t0,
     //                         m_n1_t1, m_n2_t0, m_n2_t1;
-    //                     // cout << "Initialization m_n1/2 t0/1 " << m_n1_t0 << "
-    //                     // " << m_n2_t0 << " " <<  m_n1_t1 <<" " <<  m_n2_t1 <<
+    //                     // cout << "Initialization m_n1/2 t0/1 " << m_n1_t0
+    //                     << "
+    //                     // " << m_n2_t0 << " " <<  m_n1_t1 <<" " <<  m_n2_t1
+    //                     <<
     //                     // endl;
 
     //                     // NekDouble tmin0, tmax0, tmin1, tmax1;
@@ -1376,22 +1812,29 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //                                             tmin_max1[1]);
 
     //                     // cout << "After Update : " << m_n1_t0 << " " <<
-    //                     // m_n2_t0 << " " << m_n1_t1 << " " << m_n2_t1 << endl ;
+    //                     // m_n2_t0 << " " << m_n1_t1 << " " << m_n2_t1 <<
+    //                     endl ;
 
     //                     // Just for V&V
     //                     // NekDouble dist01_GetMinDistance=
     //                     // Curve_t0->GetMinDistance(xyz1) ; NekDouble
-    //                     // dist02_GetMinDistance= Curve_t0->GetMinDistance(xyz2)
+    //                     // dist02_GetMinDistance=
+    //                     Curve_t0->GetMinDistance(xyz2)
     //                     // ; NekDouble dist11_GetMinDistance=
     //                     // Curve_t1->GetMinDistance(xyz1) ; NekDouble
-    //                     // dist12_GetMinDistance= Curve_t1->GetMinDistance(xyz2)
+    //                     // dist12_GetMinDistance=
+    //                     Curve_t1->GetMinDistance(xyz2)
     //                     // ;
 
-    //                     // m_log(VERBOSE) <<" dist 01 "  << dist01 << " dist02 "
-    //                     // << dist02 << endl ; m_log(VERBOSE) << " GetMin "<<  "
-    //                     // dist 01 "  << dist01_GetMinDistance << " dist02 " <<
+    //                     // m_log(VERBOSE) <<" dist 01 "  << dist01 << "
+    //                     dist02 "
+    //                     // << dist02 << endl ; m_log(VERBOSE) << " GetMin "<<
+    //                     "
+    //                     // dist 01 "  << dist01_GetMinDistance << " dist02 "
+    //                     <<
     //                     // dist02_GetMinDistance << endl ; m_log(VERBOSE) <<"
-    //                     // dist 11 "  << dist11 << " dist12 " << dist12 << endl
+    //                     // dist 11 "  << dist11 << " dist12 " << dist12 <<
+    //                     endl
     //                     // ; m_log(VERBOSE) << " GetMin "<<  " dist 01 "  <<
     //                     // dist11_GetMinDistance << " dist02 " <<
     //                     // dist12_GetMinDistance << endl ;
@@ -1413,9 +1856,12 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //                             edge->m_n1->SetCADCurve(Curve_t0, m_n1_t0);
     //                             edge->m_n2->SetCADCurve(Curve_t0, m_n2_t0);
     //                             // cout << "CADCurve 0 m_n1_t0= " <<
-    //                             // edge->m_n1->GetCADCurveInfo(Curve_t0->GetId())
-    //                             // << endl ; cout << "CADCurve 0 m_n2_t0= " <<
-    //                             // edge->m_n2->GetCADCurveInfo(Curve_t0->GetId())
+    //                             //
+    //                             edge->m_n1->GetCADCurveInfo(Curve_t0->GetId())
+    //                             // << endl ; cout << "CADCurve 0 m_n2_t0= "
+    //                             <<
+    //                             //
+    //                             edge->m_n2->GetCADCurveInfo(Curve_t0->GetId())
     //                             // << endl ;
     //                         }
     //                         else if (dist1 < dist0 &&
@@ -1429,15 +1875,18 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //                             edge->m_n1->SetCADCurve(Curve_t1, m_n1_t1);
     //                             edge->m_n2->SetCADCurve(Curve_t1, m_n2_t1);
     //                             // cout << "CADCurve 1 m_n1_t1= " <<
-    //                             // edge->m_n1->GetCADCurveInfo(Curve_t1->GetId())
+    //                             //
+    //                             edge->m_n1->GetCADCurveInfo(Curve_t1->GetId())
     //                             // << endl ; cout << "CADCurve 1 m_n2_t1 " <<
-    //                             // edge->m_n2->GetCADCurveInfo(Curve_t1->GetId())
+    //                             //
+    //                             edge->m_n2->GetCADCurveInfo(Curve_t1->GetId())
     //                             // << endl ;
     //                         }
     //                         else
     //                         {
     //                             m_log(WARNING)
-    //                                 << "loct circle bug cmn.size()=2 " << endl;
+    //                                 << "loct circle bug cmn.size()=2 " <<
+    //                                 endl;
     //                         }
     //                     }
     //                     else
@@ -1447,21 +1896,26 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //                         m_log(WARNING) << " dist 11 " << dist11
     //                                        << " dist12 " << dist12 << endl;
 
-    //                         cout << "dist of m_n1 to the 2 CAD Curves " << dist0
+    //                         cout << "dist of m_n1 to the 2 CAD Curves " <<
+    //                         dist0
     //                              << " " << dist1 << endl;
     //                         m_log(WARNING)
-    //                             << "Cannot find close CADCurve in CornerCase "
+    //                             << "Cannot find close CADCurve in CornerCase
+    //                             "
     //                                "of Edge with 2 common curves"
     //                             << endl;
     //                     }
-    //                     // cout << "end edge commonCADCurves.size()==2 " << endl
+    //                     // cout << "end edge commonCADCurves.size()==2 " <<
+    //                     endl
     //                     // ;
     //                 }
     //                 else
     //                 {
-    //                     // m_log(VERBOSE) << "Edge->m_id =  " << edge->m_id << "
+    //                     // m_log(VERBOSE) << "Edge->m_id =  " << edge->m_id
+    //                     << "
     //                     // common CADCurves N= " << commonCADCurves.size()
-    //                     // <<endl; m_log(VERBOSE) << edge->m_n1->GetLoc()[0] <<
+    //                     // <<endl; m_log(VERBOSE) << edge->m_n1->GetLoc()[0]
+    //                     <<
     //                     // " " <<  edge->m_n1->GetLoc()[1] << " " <<
     //                     // edge->m_n1->GetLoc()[2] << endl; m_log(VERBOSE) <<
     //                     // edge->m_n2->GetLoc()[0] << " " <<
@@ -1470,7 +1924,8 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //                     // "Edge has more than 2 CADCurves common, assign
     //                     // automatically one of the surfaces"<<endl;
 
-    //                     // Check all edges of the two surfaces  and select one
+    //                     // Check all edges of the two surfaces  and select
+    //                     one
     //                     // When topologically they are two CAD curves that do
     //                     // not touch
     //                     for (auto surfID : commonSurfacesEdge)
@@ -1481,15 +1936,20 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //                         {
     //                             for (auto curve : edgeloop->edges)
     //                             {
-    //                                 NekDouble dist01, dist02, m_n1_t0, m_n2_t0;
-    //                                 Array<OneD, NekDouble> tmin_max0 =
+    //                                 NekDouble dist01, dist02, m_n1_t0,
+    //                                 m_n2_t0; Array<OneD, NekDouble> tmin_max0
+    //                                 =
     //                                     curve->GetBounds();
 
-    //                                 dist01 = curve->loct(edge->m_n1->GetLoc(),
-    //                                                      m_n1_t0, tmin_max0[0],
+    //                                 dist01 =
+    //                                 curve->loct(edge->m_n1->GetLoc(),
+    //                                                      m_n1_t0,
+    //                                                      tmin_max0[0],
     //                                                      tmin_max0[1]);
-    //                                 dist02 = curve->loct(edge->m_n2->GetLoc(),
-    //                                                      m_n2_t0, tmin_max0[0],
+    //                                 dist02 =
+    //                                 curve->loct(edge->m_n2->GetLoc(),
+    //                                                      m_n2_t0,
+    //                                                      tmin_max0[0],
     //                                                      tmin_max0[1]);
     //                                 if (dist01 < 1e-7 && dist02 < 1e-7)
     //                                 {
@@ -1506,12 +1966,14 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //             else
     //             {
     //                 m_log(WARNING)
-    //                     << "EdgeCommonSurfaces = " << commonSurfacesEdge.size()
+    //                     << "EdgeCommonSurfaces = " <<
+    //                     commonSurfacesEdge.size()
     //                     << endl;
     //                 for (auto surfID : commonSurfacesEdge)
     //                 {
-    //                     CADSurfSharedPtr surf = m_mesh->m_cad->GetSurf(surfID);
-    //                     for (auto edgeloop : surf->GetEdges())
+    //                     CADSurfSharedPtr surf =
+    //                     m_mesh->m_cad->GetSurf(surfID); for (auto edgeloop :
+    //                     surf->GetEdges())
     //                     {
     //                         for (auto curve : edgeloop->edges)
     //                         {
@@ -1520,10 +1982,12 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //                                 curve->GetBounds();
 
     //                             dist01 =
-    //                                 curve->loct(edge->m_n1->GetLoc(), m_n1_t0,
+    //                                 curve->loct(edge->m_n1->GetLoc(),
+    //                                 m_n1_t0,
     //                                             tmin_max0[0], tmin_max0[1]);
     //                             dist02 =
-    //                                 curve->loct(edge->m_n2->GetLoc(), m_n2_t0,
+    //                                 curve->loct(edge->m_n2->GetLoc(),
+    //                                 m_n2_t0,
     //                                             tmin_max0[0], tmin_max0[1]);
     //                             if (dist01 < 1e-7 && dist02 < 1e-7)
     //                             {
@@ -1539,14 +2003,16 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //     }
     //     else if (commonSurfacesEL.size() == 0)
     //     {
-    //         // CASE 3 (Element Between two NURBS surfaces - use ProjectCAD - BUG
+    //         // CASE 3 (Element Between two NURBS surfaces - use ProjectCAD -
+    //         BUG
     //         // #2  )
     //         // m_log(WARNING) << "ProjectCAD legacy" << endl ;
     //         // If CASE 3 (element split between >1 NURBS by StarCCM) use the
     //         // legacy ProjectCAD module Do projectCAD
 
     //         vector<EdgeSharedPtr> surfEdgesLocal = el->GetEdgeList();
-    //         int order                            = m_config["order"].as<int>();
+    //         int order                            =
+    //         m_config["order"].as<int>();
 
     //         map<int, vector<int>> eds;
 
@@ -1565,7 +2031,8 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //             {
     //                 // skip projection again Edges that are already projected
     //                 // If not bug on the junction
-    //                 // cout << "Skip the edge - already projected or given CAD"
+    //                 // cout << "Skip the edge - already projected or given
+    //                 CAD"
     //                 // << endl ;
     //                 continue;
     //             }
@@ -1592,7 +2059,8 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //             sort(vi2.begin(), vi2.end());
 
     //             vector<int> cmn;
-    //             set_intersection(vi1.begin(), vi1.end(), vi2.begin(), vi2.end(),
+    //             set_intersection(vi1.begin(), vi1.end(), vi2.begin(),
+    //             vi2.end(),
     //                              back_inserter(cmn));
     //             eds[cmn.size()].push_back(0);
 
@@ -1627,7 +2095,8 @@ void ProcessProjectCAD::LinkFaceToCAD()
 
     //                     // can compare the loction of the projection to the
     //                     // corresponding position of the straight sided edge
-    //                     // if the two differ by more than the length of the edge
+    //                     // if the two differ by more than the length of the
+    //                     edge
     //                     // something has gone wrong
     //                     NekDouble len = edge->m_n1->Distance(edge->m_n2);
 
@@ -1641,22 +2110,29 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //                         Array<OneD, NekDouble> loc;
     //                         loc = m_mesh->m_cad->GetSurf(cmn[j])->P(uv);
     //                         Array<OneD, NekDouble> locT(3);
-    //                         locT[0] = edge->m_n1->m_x * (1.0 - gll[k]) / 2.0 +
+    //                         locT[0] = edge->m_n1->m_x * (1.0 - gll[k]) / 2.0
+    //                         +
     //                                   edge->m_n2->m_x * (1.0 + gll[k]) / 2.0;
-    //                         locT[1] = edge->m_n1->m_y * (1.0 - gll[k]) / 2.0 +
+    //                         locT[1] = edge->m_n1->m_y * (1.0 - gll[k]) / 2.0
+    //                         +
     //                                   edge->m_n2->m_y * (1.0 + gll[k]) / 2.0;
-    //                         locT[2] = edge->m_n1->m_z * (1.0 - gll[k]) / 2.0 +
+    //                         locT[2] = edge->m_n1->m_z * (1.0 - gll[k]) / 2.0
+    //                         +
     //                                   edge->m_n2->m_z * (1.0 + gll[k]) / 2.0;
 
     //                         NekDouble d =
-    //                             sqrt((locT[0] - loc[0]) * (locT[0] - loc[0]) +
-    //                                  (locT[1] - loc[1]) * (locT[1] - loc[1]) +
-    //                                  (locT[2] - loc[2]) * (locT[2] - loc[2]));
+    //                             sqrt((locT[0] - loc[0]) * (locT[0] - loc[0])
+    //                             +
+    //                                  (locT[1] - loc[1]) * (locT[1] - loc[1])
+    //                                  + (locT[2] - loc[2]) * (locT[2] -
+    //                                  loc[2]));
 
     //                         if (d > len)
     //                         {
-    //                             // m_log(WARNING) << "CASE3 cmn1 d > len (Legacy
-    //                             // ProjectCAD - no problem delete the log KK )"
+    //                             // m_log(WARNING) << "CASE3 cmn1 d > len
+    //                             (Legacy
+    //                             // ProjectCAD - no problem delete the log KK
+    //                             )"
     //                             // << endl ;
     //                             edge->m_edgeNodes.clear();
     //                             break;
@@ -1679,13 +2155,15 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //             else if (cmn.size() == 0)
     //             {
     //                 // m_log(WARNING) << "CASE3 cmn=0 loc= " <<
-    //                 // edge->m_n1->GetLoc()[0] << " " << edge->m_n1->GetLoc()[1]
+    //                 // edge->m_n1->GetLoc()[0] << " " <<
+    //                 edge->m_n1->GetLoc()[1]
     //                 // << " " << edge->m_n1->GetLoc()[2]   << endl ;
     //                 //  projection, if the projection requires more than two
     //                 //  surfaces including the edge nodes, then,  in theory
     //                 //  projection shouldnt be used
 
-    //                 // Optional FORCING CASE 3 ELEMENTSS to be with a lower p to
+    //                 // Optional FORCING CASE 3 ELEMENTSS to be with a lower p
+    //                 to
     //                 // avoid projection problems in C1 discontinuous surfaces
     //                 // (Disabled - orderSafe = order)
     //                 int orderSafe = order;
@@ -1706,7 +2184,8 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //                               edge->m_n2->m_z * (1.0 + gll[k]) / 2.0;
 
     //                     int s;
-    //                     // cout << "initial locT " << locT[0] << " " << locT[1]
+    //                     // cout << "initial locT " << locT[0] << " " <<
+    //                     locT[1]
     //                     // << " " << locT[2] << endl ;
     //                     if (!findAndProject(rtree, locT, s))
     //                     {
@@ -1714,7 +2193,8 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //                         break;
     //                     }
 
-    //                     // cout << "end locT " << locT[0] << " " << locT[1] << "
+    //                     // cout << "end locT " << locT[0] << " " << locT[1]
+    //                     << "
     //                     // " << locT[2] << endl ;
 
     //                     sused.insert(s);
@@ -1741,10 +2221,14 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //     {
     //         // TestCase TC09 NACA0012 with very thin TE and a mainplane wing
     //         // constructed by single NURBS CADSurf The TE face has only 1
-    //         // element in vertical direction -> hence all vertices are part of
-    //         // both the mainplane NURBS + TE plane The following procedure will
-    //         // work also if the TE surface is curved NURBS. (R of curvature < TE
-    //         // thickness/2.0), otherwise it will pick the NURBS Hence in the end
+    //         // element in vertical direction -> hence all vertices are part
+    //         of
+    //         // both the mainplane NURBS + TE plane The following procedure
+    //         will
+    //         // work also if the TE surface is curved NURBS. (R of curvature <
+    //         TE
+    //         // thickness/2.0), otherwise it will pick the NURBS Hence in the
+    //         end
     //         // a Jacobian check of the face is constructed, to avoid J=0
     //         // elements
 
@@ -1752,13 +2236,15 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //             << "The element[2] vertices are part of too many common "
     //                "surfaces commonSurfacesEL.size()= "
     //             << commonSurfacesEL.size()
-    //             << "-> probably Bounding box proximities or CAD Issue " << endl;
+    //             << "-> probably Bounding box proximities or CAD Issue " <<
+    //             endl;
     //         m_log(WARNING) << commonSurfacesEL.size() << endl;
 
     //         vector<NekDouble> DistToSurf(commonSurfacesEL.size());
     //         fill(DistToSurf.begin(), DistToSurf.end(), 0.0);
 
-    //         // cout <<  DistToSurf.size() << " initialization of the vector[0] =
+    //         // cout <<  DistToSurf.size() << " initialization of the
+    //         vector[0] =
     //         // " << DistToSurf[0] << endl ;
 
     //         // 0 Calculate the min edge length for the face
@@ -1803,9 +2289,10 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //                         << "locuv dist= " << dist
     //                         << " minEdgeLength= " << minEdgeLength << endl;
     //                     m_log(WARNING)
-    //                         << "The locuv distance on commonSurfacesEL>1 from "
-    //                            "the edge midpoint to the surface is too big. "
-    //                            "The mesh in this region is too coarse for "
+    //                         << "The locuv distance on commonSurfacesEL>1 from
+    //                         "
+    //                            "the edge midpoint to the surface is too big.
+    //                            " "The mesh in this region is too coarse for "
     //                            "reconstruction - WARNING instead ? "
     //                         << endl;
     //                 }
@@ -1813,14 +2300,16 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //         }
 
     //         // 3. Sort the distances and pick the minimum surface
-    //         auto it = std::minmax_element(DistToSurf.begin(), DistToSurf.end());
+    //         auto it = std::minmax_element(DistToSurf.begin(),
+    //         DistToSurf.end());
 
     //         // cout << "The selected surface = " <<
     //         // std::distance(DistToSurf.begin(), it.first) << endl ;
 
     //         // 4. Assign CADSurf to Element[2] + Edge
     //         Surf = m_mesh->m_cad->GetSurf(
-    //             commonSurfacesEL[std::distance(DistToSurf.begin(), it.first)]);
+    //             commonSurfacesEL[std::distance(DistToSurf.begin(),
+    //             it.first)]);
     //         el->m_parentCAD = Surf;
     //         for (auto edge : el->GetEdgeList())
     //         {
@@ -1829,7 +2318,5 @@ void ProcessProjectCAD::LinkFaceToCAD()
     //     }
     // }
 }
-
-
 
 } // namespace Nektar::NekMesh

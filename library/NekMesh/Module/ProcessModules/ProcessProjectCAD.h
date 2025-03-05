@@ -88,7 +88,7 @@ private:
     NodeSet lockedNodes;
 
     void LoadCAD(std::string filename);
-    void CreateBoundingBoxes(bgi::rtree<boxI, bgi::quadratic<16>> &rtree);
+    void CreateBoundingBoxes(bgi::rtree<boxI, bgi::quadratic<16>> &rtree, NekDouble scale);
     bool IsNotValid(std::vector<NekMesh::ElementSharedPtr> &els);
     void CalculateMinEdgeLength();
     void Auxilaries();
@@ -99,7 +99,7 @@ private:
 
     bool FindAndProject(bgi::rtree<boxI, bgi::quadratic<16>> &rtree,
                         std::array<NekDouble, 3> &in, int &surf);
-    void LinkEdgeToCAD(EdgeSet &surfEdges);
+    void LinkEdgeToCAD(EdgeSet &surfEdges, NekDouble tolv1);
     void LinkFaceToCAD();
 
     // for CASE 3 elements between two surfaces
