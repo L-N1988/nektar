@@ -40,6 +40,7 @@
 
 namespace Nektar
 {
+
 class UnsteadyAdvection : public SolverUtils::AdvectionSystem
 {
 public:
@@ -125,6 +126,7 @@ protected:
 private:
     NekDouble m_waveFreq;
 };
+
 } // namespace Nektar
 
 #endif

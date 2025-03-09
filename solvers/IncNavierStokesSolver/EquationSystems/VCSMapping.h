@@ -40,9 +40,12 @@
 
 namespace Nektar
 {
+
 class VCSMapping : public VelocityCorrectionScheme
 {
 public:
+    friend class MemoryManager<VCSMapping>;
+
     /// Creates an instance of this class
     static SolverUtils::EquationSystemSharedPtr create(
         const LibUtilities::SessionReaderSharedPtr &pSession,
@@ -57,20 +60,19 @@ public:
     /// Name of class
     static std::string className;
 
-    /// Constructor.
-    VCSMapping(const LibUtilities::SessionReaderSharedPtr &pSession,
-               const SpatialDomains::MeshGraphSharedPtr &pGraph);
-
-    //
     void ApplyIncNSMappingForcing(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray);
 
-    ~VCSMapping() override;
+    ~VCSMapping() override = default;
 
     void v_InitObject(bool DeclareField = true) override;
 
 protected:
+    /// Constructor.
+    VCSMapping(const LibUtilities::SessionReaderSharedPtr &pSession,
+               const SpatialDomains::MeshGraphSharedPtr &pGraph);
+
     // Mapping object
     GlobalMapping::MappingSharedPtr m_mapping;
 

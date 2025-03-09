@@ -60,11 +60,12 @@ public:
         p->InitObject();
         return p;
     }
+
     /// Name of class
     static std::string className;
 
     /// Destructor
-    ~Dummy() override;
+    ~Dummy() override = default;
 
 protected:
     SolverUtils::CouplingSharedPtr m_coupling;
@@ -95,6 +96,7 @@ protected:
         return false;
     }
 };
+
 } // namespace Nektar
 
 #endif

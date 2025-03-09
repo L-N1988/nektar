@@ -39,6 +39,7 @@
 
 namespace Nektar
 {
+
 class RoeSolver : public CompressibleSolver
 {
 public:

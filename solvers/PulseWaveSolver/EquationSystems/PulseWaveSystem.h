@@ -78,7 +78,7 @@ class PulseWaveSystem : public UnsteadySystem
 {
 public:
     /// Destructor
-    ~PulseWaveSystem() override;
+    ~PulseWaveSystem() override = default;
 
     int GetNdomains()
     {

@@ -56,7 +56,7 @@ public:
         const int spaceDim,
         const SpatialDomains::MeshGraphSharedPtr &pGraph = nullptr);
 
-    ~VariableConverter();
+    ~VariableConverter() = default;
 
     // Variable manipulations valid for all fluids
     void GetDynamicEnergy(
@@ -163,9 +163,17 @@ public:
         const Array<OneD, NekDouble> &div         = NullNekDouble1DArray,
         const Array<OneD, NekDouble> &curlSquared = NullNekDouble1DArray);
 
-    Array<OneD, NekDouble> &GetAv();
+    Array<OneD, NekDouble> &GetAv()
+    {
+        ASSERTL1(m_muAv != NullNekDouble1DArray, "m_muAv not set");
+        return m_muAv;
+    }
 
-    Array<OneD, NekDouble> &GetAvTrace();
+    Array<OneD, NekDouble> &GetAvTrace()
+    {
+        ASSERTL1(m_muAvTrace != NullNekDouble1DArray, "m_muAvTrace not set");
+        return m_muAvTrace;
+    }
 
     bool GetFlagCalcDivCurl(void) const
     {

@@ -67,7 +67,7 @@ public:
     /// Name of class
     static std::string className;
 
-    ~PulseWavePropagation() override;
+    ~PulseWavePropagation() override = default;
 
     // Functions for Riemann solver
     Array<OneD, NekDouble> &GetA0();

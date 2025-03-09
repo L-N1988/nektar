@@ -38,13 +38,13 @@
 #include <DummySolver/EquationSystems/Dummy.h>
 #include <LibUtilities/BasicUtils/Timer.h>
 
-using namespace std;
-
 namespace Nektar
 {
-string Dummy::className = GetEquationSystemFactory().RegisterCreatorFunction(
-    "Dummy", Dummy::create,
-    "Dummy Equation System that only sends/receives fields");
+
+std::string Dummy::className =
+    GetEquationSystemFactory().RegisterCreatorFunction(
+        "Dummy", Dummy::create,
+        "Dummy Equation System that only sends/receives fields");
 
 Dummy::Dummy(const LibUtilities::SessionReaderSharedPtr &pSession,
              const SpatialDomains::MeshGraphSharedPtr &pGraph)
@@ -71,7 +71,7 @@ void Dummy::v_InitObject(bool DeclareFields)
 
         ASSERTL0(vCoupling->Attribute("TYPE"),
                  "Missing TYPE attribute in Coupling");
-        string vType = vCoupling->Attribute("TYPE");
+        std::string vType = vCoupling->Attribute("TYPE");
         ASSERTL0(!vType.empty(),
                  "TYPE attribute must be non-empty in Coupling");
 
@@ -91,13 +91,6 @@ void Dummy::v_InitObject(bool DeclareFields)
 }
 
 /**
- * @brief Destructor for Dummy class.
- */
-Dummy::~Dummy()
-{
-}
-
-/**
  * @brief v_PreIntegrate
  */
 bool Dummy::v_PreIntegrate(int step)
@@ -109,7 +102,7 @@ bool Dummy::v_PreIntegrate(int step)
         {
             numForceFields += x->GetForces().size();
         }
-        vector<string> varNames;
+        std::vector<std::string> varNames;
         Array<OneD, Array<OneD, NekDouble>> phys(m_fields.size() +
                                                  numForceFields);
         for (int i = 0; i < m_fields.size(); ++i)
@@ -124,8 +117,8 @@ bool Dummy::v_PreIntegrate(int step)
             for (int i = 0; i < x->GetForces().size(); ++i)
             {
                 phys[m_fields.size() + f + i] = x->GetForces()[i];
-                varNames.push_back("F_" + boost::lexical_cast<string>(f) + "_" +
-                                   m_session->GetVariable(i));
+                varNames.push_back("F_" + boost::lexical_cast<std::string>(f) +
+                                   "_" + m_session->GetVariable(i));
             }
             f++;
         }
@@ -162,7 +155,8 @@ bool Dummy::v_PostIntegrate(int step)
         timer1.Stop();
         if (m_session->DefinesCmdLineArgument("verbose"))
         {
-            cout << "Field evaluation time: " << timer1.TimePerTest(1) << endl;
+            std::cout << "Field evaluation time: " << timer1.TimePerTest(1)
+                      << std::endl;
         }
     }
 
@@ -198,7 +192,7 @@ void Dummy::v_Output()
             for (int j = 0; j < npts; ++j)
             {
                 l2err += x->GetForces()[i][j] * x->GetForces()[i][j];
-                linferr = max(linferr, fabs(x->GetForces()[i][j]));
+                linferr = std::max(linferr, fabs(x->GetForces()[i][j]));
             }
 
             m_comm->AllReduce(l2err, LibUtilities::ReduceSum);
@@ -210,15 +204,15 @@ void Dummy::v_Output()
 
             if (m_comm->TreatAsRankZero())
             {
-                cout << "L 2 error (variable "
-                     << "F_" + boost::lexical_cast<string>(f) + "_" +
-                            m_session->GetVariable(i)
-                     << ") : " << l2err << endl;
+                std::cout << "L 2 error (variable "
+                          << "F_" + boost::lexical_cast<std::string>(f) + "_" +
+                                 m_session->GetVariable(i)
+                          << ") : " << l2err << std::endl;
 
-                cout << "L inf error (variable "
-                     << "F_" + boost::lexical_cast<string>(f) + "_" +
-                            m_session->GetVariable(i)
-                     << ") : " << linferr << endl;
+                std::cout << "L inf error (variable "
+                          << "F_" + boost::lexical_cast<std::string>(f) + "_" +
+                                 m_session->GetVariable(i)
+                          << ") : " << linferr << std::endl;
             }
         }
         f++;

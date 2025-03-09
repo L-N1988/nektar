@@ -75,5 +75,6 @@ protected:
 
     bool v_SupportsShockCaptType(const std::string type) const override;
 };
+
 } // namespace Nektar
 #endif

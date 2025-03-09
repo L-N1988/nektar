@@ -41,6 +41,7 @@ using namespace Nektar::SolverUtils;
 
 namespace Nektar
 {
+
 class SteadyAdvectionDiffusion : public EquationSystem
 {
 public:
@@ -77,6 +78,7 @@ protected:
     void v_DoInitialise(bool dumpInitialConditions = false) override;
     void v_DoSolve() override;
 };
+
 } // namespace Nektar
 
 #endif

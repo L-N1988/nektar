@@ -183,6 +183,7 @@ private:
 
     void EvaluateCoriolis(void);
 };
+
 } // namespace Nektar
 
 #endif

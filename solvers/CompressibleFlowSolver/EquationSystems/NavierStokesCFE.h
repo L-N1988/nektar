@@ -42,6 +42,7 @@
 
 namespace Nektar
 {
+
 /**
  *
  *

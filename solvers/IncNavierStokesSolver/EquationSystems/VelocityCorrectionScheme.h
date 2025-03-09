@@ -42,6 +42,8 @@ namespace Nektar
 class VelocityCorrectionScheme : public IncNavierStokes
 {
 public:
+    friend class MemoryManager<VelocityCorrectionScheme>;
+
     /// Creates an instance of this class
     static SolverUtils::EquationSystemSharedPtr create(
         const LibUtilities::SessionReaderSharedPtr &pSession,
@@ -57,12 +59,7 @@ public:
     /// Name of class
     static std::string className;
 
-    /// Constructor.
-    VelocityCorrectionScheme(
-        const LibUtilities::SessionReaderSharedPtr &pSession,
-        const SpatialDomains::MeshGraphSharedPtr &pGraph);
-
-    ~VelocityCorrectionScheme() override;
+    ~VelocityCorrectionScheme() override = default;
 
     void v_InitObject(bool DeclareField = true) override;
 
@@ -109,6 +106,11 @@ public:
     }
 
 protected:
+    /// Constructor.
+    VelocityCorrectionScheme(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph);
+
     /// bool to identify if spectral vanishing viscosity is active.
     bool m_useHomo1DSpecVanVisc;
     /// bool to identify if spectral vanishing viscosity is active.

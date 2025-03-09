@@ -66,7 +66,7 @@ public:
 
     static std::string className;
 
-    ~StaticWall() override;
+    ~StaticWall() override = default;
 
 protected:
     void v_Initialise(

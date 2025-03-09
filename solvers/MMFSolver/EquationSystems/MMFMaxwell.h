@@ -89,6 +89,7 @@ public:
         p->InitObject();
         return p;
     }
+
     /// Name of class
     static std::string className;
 
@@ -98,7 +99,7 @@ public:
     void v_DoSolve() override;
 
     /// Destructor
-    ~MMFMaxwell() override;
+    ~MMFMaxwell() override = default;
 
 protected:
     int m_ElemtGroup0;
@@ -252,6 +253,7 @@ protected:
 
 private:
 };
+
 } // namespace Nektar
 
 #endif

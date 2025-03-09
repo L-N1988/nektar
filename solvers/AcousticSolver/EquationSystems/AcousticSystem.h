@@ -62,7 +62,7 @@ public:
     friend class MemoryManager<AcousticSystem>;
 
     /// Destructor
-    ~AcousticSystem() override;
+    ~AcousticSystem() override = default;
 
 protected:
     /// indices of the fields
@@ -147,6 +147,7 @@ private:
 
     void UpdateBasefieldFwdBwd();
 };
+
 } // namespace Nektar
 
 #endif

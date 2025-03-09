@@ -98,7 +98,7 @@ public:
     TestType m_TestType;
 
     /// Desctructor
-    ~MMFDiffusion() override;
+    ~MMFDiffusion() override = default;
 
 protected:
     /// Constructor

@@ -69,24 +69,31 @@ ArtificialDiffusionFactory &GetArtificialDiffusionFactory();
 class ArtificialDiffusion
 {
 public:
-    virtual ~ArtificialDiffusion()
-    {
-    }
+    virtual ~ArtificialDiffusion() = default;
 
     /// Apply the artificial diffusion
     void DoArtificialDiffusion(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray);
+        Array<OneD, Array<OneD, NekDouble>> &outarray)
+    {
+        v_DoArtificialDiffusion(inarray, outarray);
+    }
 
     /// Apply the artificial diffusion the outarray is in coeff space
     void DoArtificialDiffusionCoeff(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray);
+        Array<OneD, Array<OneD, NekDouble>> &outarray)
+    {
+        v_DoArtificialDiffusionCoeff(inarray, outarray);
+    }
 
     /// Calculate the artificial viscosity
     void GetArtificialViscosity(
         const Array<OneD, Array<OneD, NekDouble>> &physfield,
-        Array<OneD, NekDouble> &mu);
+        Array<OneD, NekDouble> &mu)
+    {
+        v_GetArtificialViscosity(physfield, mu);
+    }
 
 protected:
     /// Session reader

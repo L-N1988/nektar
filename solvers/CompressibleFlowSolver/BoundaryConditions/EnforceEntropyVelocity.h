@@ -53,6 +53,8 @@ class EnforceEntropyVelocity : public CFSBndCond
 public:
     friend class MemoryManager<EnforceEntropyVelocity>;
 
+    ~EnforceEntropyVelocity(void) override = default;
+
     /// Creates an instance of this class
     static CFSBndCondSharedPtr create(
         const LibUtilities::SessionReaderSharedPtr &pSession,
@@ -117,8 +119,6 @@ private:
         const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
         const Array<OneD, Array<OneD, NekDouble>> &pGridVelocity,
         const int pSpaceDim, const int bcRegion, const int cnt);
-
-    ~EnforceEntropyVelocity(void) override{};
 };
 
 } // namespace Nektar

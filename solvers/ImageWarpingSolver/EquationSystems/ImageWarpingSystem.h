@@ -42,6 +42,7 @@ using namespace Nektar::SolverUtils;
 
 namespace Nektar
 {
+
 class ImageWarpingSystem : public AdvectionSystem
 {
 public:
@@ -61,7 +62,7 @@ public:
     /// Name of class
     static std::string className;
 
-    ~ImageWarpingSystem() override;
+    ~ImageWarpingSystem() override = default;
 
 protected:
     SolverUtils::RiemannSolverSharedPtr m_riemannSolver;
@@ -92,6 +93,7 @@ protected:
     // Print Summary
     void v_GenerateSummary(SolverUtils::SummaryList &s) override;
 };
+
 } // namespace Nektar
 
 #endif

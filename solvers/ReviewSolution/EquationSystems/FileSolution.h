@@ -47,6 +47,7 @@
 
 namespace Nektar::SolverUtils
 {
+
 class FileFieldInterpolator;
 typedef std::shared_ptr<FileFieldInterpolator> FileFieldInterpolatorSharedPtr;
 class FileFieldInterpolator
@@ -86,9 +87,9 @@ protected:
 
     DNekBlkMatSharedPtr GetFloquetBlockMatrix(int nexp);
 
-    FileFieldInterpolator();
+    FileFieldInterpolator() = default;
 
-    ~FileFieldInterpolator();
+    ~FileFieldInterpolator() = default;
 
     void DFT(const std::string file,
              const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
@@ -125,7 +126,7 @@ public:
     static std::string className;
 
     /// Destructor
-    ~FileSolution() override;
+    ~FileSolution() override = default;
 
 protected:
     void v_GetVelocity(
@@ -180,6 +181,7 @@ private:
     Array<OneD, Array<OneD, NekDouble>> m_coord;
     std::map<std::string, LibUtilities::EquationSharedPtr> m_solutionFunction;
 };
+
 } // namespace Nektar::SolverUtils
 
 #endif // NEKTAR_SOLVERS_INCNAVIERSTOKES_H

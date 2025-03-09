@@ -66,7 +66,7 @@ public:
 
     static std::string className;
 
-    ~MovingFrameFar() override;
+    ~MovingFrameFar() override = default;
 
 protected:
     void v_Initialise(

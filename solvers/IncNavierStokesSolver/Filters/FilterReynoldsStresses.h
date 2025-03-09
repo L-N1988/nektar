@@ -39,6 +39,7 @@
 
 namespace Nektar::SolverUtils
 {
+
 class FilterReynoldsStresses : public FilterFieldConvert
 {
 public:
@@ -59,14 +60,14 @@ public:
     /// Name of the class
     static std::string className;
 
-    SOLVER_UTILS_EXPORT
+    ~FilterReynoldsStresses() override = default;
+
+protected:
     FilterReynoldsStresses(
         const LibUtilities::SessionReaderSharedPtr &pSession,
         const std::shared_ptr<SolverUtils::EquationSystem> &pEquation,
         const std::map<std::string, std::string> &pParams);
-    SOLVER_UTILS_EXPORT ~FilterReynoldsStresses() override;
 
-protected:
     void v_Initialise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
         const NekDouble &time) override;
@@ -91,6 +92,7 @@ protected:
     NekDouble m_alpha;
     bool m_movAvg;
 };
+
 } // namespace Nektar::SolverUtils
 
 #endif /* NEKTAR_SOLVERUTILS_FILTERS_FILTERREYNOLDSSTRESES_H */

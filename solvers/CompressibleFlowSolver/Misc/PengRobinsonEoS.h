@@ -94,7 +94,7 @@ protected:
 private:
     PengRobinsonEoS(const LibUtilities::SessionReaderSharedPtr &pSession);
 
-    ~PengRobinsonEoS(void) override{};
+    ~PengRobinsonEoS(void) override = default;
 
     // Alpha term of Peng-Robinson EoS
     template <class T, typename = typename std::enable_if<

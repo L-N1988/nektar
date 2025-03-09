@@ -274,6 +274,7 @@ private:
 
     void Checkpoint_Output_Cartesian(std::string outname);
 };
+
 } // namespace Nektar
 
 #endif

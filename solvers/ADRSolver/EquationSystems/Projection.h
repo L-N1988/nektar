@@ -41,6 +41,7 @@ using namespace Nektar::SolverUtils;
 
 namespace Nektar
 {
+
 class Projection : public EquationSystem
 {
 public:
@@ -73,6 +74,7 @@ protected:
 
 private:
 };
+
 } // namespace Nektar
 
 #endif

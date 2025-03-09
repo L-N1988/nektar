@@ -57,6 +57,8 @@ typedef std::shared_ptr<SubSteppingExtrapolate> SubSteppingExtrapolateSharedPtr;
 class SubSteppingExtrapolate : public Extrapolate
 {
 public:
+    friend class MemoryManager<SubSteppingExtrapolate>;
+
     /// Creates an instance of this class
     static ExtrapolateSharedPtr create(
         const LibUtilities::SessionReaderSharedPtr &pSession,
@@ -73,15 +75,15 @@ public:
     /// Name of class
     static std::string className;
 
+    ~SubSteppingExtrapolate() override = default;
+
+protected:
     SubSteppingExtrapolate(const LibUtilities::SessionReaderSharedPtr pSession,
                            Array<OneD, MultiRegions::ExpListSharedPtr> pFields,
                            MultiRegions::ExpListSharedPtr pPressure,
                            const Array<OneD, int> pVel,
                            const SolverUtils::AdvectionSharedPtr advObject);
 
-    ~SubSteppingExtrapolate() override;
-
-protected:
     void v_EvaluatePressureBCs(
         const Array<OneD, const Array<OneD, NekDouble>> &fields,
         const Array<OneD, const Array<OneD, NekDouble>> &N,

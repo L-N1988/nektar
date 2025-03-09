@@ -34,11 +34,10 @@
 
 #include <CompressibleFlowSolver/EquationSystems/NavierStokesCFE.h>
 
-using namespace std;
-
 namespace Nektar
 {
-string NavierStokesCFE::className =
+
+std::string NavierStokesCFE::className =
     SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
         "NavierStokesCFE", NavierStokesCFE::create,
         "NavierStokes equations in conservative variables.");
@@ -101,7 +100,7 @@ void NavierStokesCFE::InitObject_Explicit()
         m_is_shockCaptPhys = true;
     }
 
-    string diffName;
+    std::string diffName;
     m_session->LoadSolverInfo("DiffusionType", diffName, "LDGNS");
 
     m_diffusion =
@@ -906,7 +905,7 @@ void NavierStokesCFE::v_ExtraFldOutput(
         Array<OneD, NekDouble> aFwd(nCoeffs), mFwd(nCoeffs);
         Array<OneD, NekDouble> sensFwd(nCoeffs);
 
-        string velNames[3] = {"u", "v", "w"};
+        std::string velNames[3] = {"u", "v", "w"};
         for (int i = 0; i < m_spacedim; ++i)
         {
             m_fields[0]->FwdTransLocalElmt(velocity[i], velFwd[i]);
@@ -994,4 +993,5 @@ bool NavierStokesCFE::v_SupportsShockCaptType(const std::string type) const
         return false;
     }
 }
+
 } // namespace Nektar

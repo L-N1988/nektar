@@ -38,11 +38,10 @@
 #include <SolverUtils/Advection/AdvectionWeakDG.h>
 #include <iostream>
 
-using namespace std;
-
 namespace Nektar
 {
-string UnsteadyAdvection::className =
+
+std::string UnsteadyAdvection::className =
     SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
         "UnsteadyAdvection", UnsteadyAdvection::create,
         "Unsteady Advection equation.");
@@ -103,8 +102,8 @@ void UnsteadyAdvection::v_InitObject(bool DeclareFields)
                 m_traceVn = Array<OneD, NekDouble>(GetTraceNpoints());
             }
 
-            string advName;
-            string riemName;
+            std::string advName;
+            std::string riemName;
             m_session->LoadSolverInfo("AdvectionType", advName, "WeakDG");
             m_advObject = SolverUtils::GetAdvectionFactory().CreateInstance(
                 advName, advName);
@@ -132,7 +131,7 @@ void UnsteadyAdvection::v_InitObject(bool DeclareFields)
         case MultiRegions::eGalerkin:
         case MultiRegions::eMixed_CG_Discontinuous:
         {
-            string advName;
+            std::string advName;
             m_session->LoadSolverInfo("AdvectionType", advName,
                                       "NonConservative");
             m_advObject = SolverUtils::GetAdvectionFactory().CreateInstance(

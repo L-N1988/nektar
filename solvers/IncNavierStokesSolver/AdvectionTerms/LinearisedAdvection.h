@@ -106,7 +106,7 @@ protected:
 
     LinearisedAdvection();
 
-    ~LinearisedAdvection() override;
+    ~LinearisedAdvection() override = default;
 
     void v_InitObject(
         LibUtilities::SessionReaderSharedPtr pSession,

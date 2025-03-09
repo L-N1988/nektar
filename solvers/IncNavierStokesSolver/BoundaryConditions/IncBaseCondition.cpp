@@ -37,6 +37,7 @@
 
 namespace Nektar
 {
+
 NekDouble IncBaseCondition::StifflyStable_Betaq_Coeffs[3][3] = {
     {1.0, 0.0, 0.0}, {2.0, -1.0, 0.0}, {3.0, -3.0, 1.0}};
 NekDouble IncBaseCondition::StifflyStable_Alpha_Coeffs[3][3] = {
@@ -58,10 +59,6 @@ IncBaseCondition::IncBaseCondition(
     [[maybe_unused]] int nbnd, [[maybe_unused]] int spacedim,
     [[maybe_unused]] int bnddim)
     : m_spacedim(spacedim), m_bnddim(bnddim), m_nbnd(nbnd), m_field(pFields[0])
-{
-}
-
-IncBaseCondition::~IncBaseCondition()
 {
 }
 
