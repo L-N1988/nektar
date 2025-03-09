@@ -37,11 +37,9 @@
 
 #include <AcousticSolver/EquationSystems/LEE.h>
 
-using namespace std;
-
 namespace Nektar
 {
-string LEE::className = GetEquationSystemFactory().RegisterCreatorFunction(
+std::string LEE::className = GetEquationSystemFactory().RegisterCreatorFunction(
     "LEE", LEE::create, "Linearized Euler Equations");
 
 LEE::LEE(const LibUtilities::SessionReaderSharedPtr &pSession,
@@ -80,7 +78,7 @@ void LEE::v_InitObject(bool DeclareFields)
         m_bfFwdBwd[i] = Array<OneD, NekDouble>(GetTraceNpoints(), 0.0);
     }
 
-    string riemName;
+    std::string riemName;
     m_session->LoadSolverInfo("UpwindType", riemName, "Upwind");
     if (boost::to_lower_copy(riemName) == "characteristics" ||
         boost::to_lower_copy(riemName) == "leeupwind" ||
@@ -100,7 +98,7 @@ void LEE::v_InitObject(bool DeclareFields)
     m_riemannSolver->SetAuxVec("vecLocs", &LEE::GetVecLocs, this);
 
     // Set up advection operator
-    string advName;
+    std::string advName;
     m_session->LoadSolverInfo("AdvectionType", advName, "WeakDG");
     m_advection =
         SolverUtils::GetAdvectionFactory().CreateInstance(advName, advName);
@@ -117,13 +115,6 @@ void LEE::v_InitObject(bool DeclareFields)
     {
         ASSERTL0(false, "Implicit LEE not set up.");
     }
-}
-
-/**
- * @brief Destructor for LEE class.
- */
-LEE::~LEE()
-{
 }
 
 /**

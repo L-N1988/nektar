@@ -43,6 +43,7 @@
 namespace Nektar::SolverUtils
 {
 class ForcingIncNSSyntheticEddy
+
     : virtual public SolverUtils::Forcing,
       virtual public SolverUtils::ForcingSyntheticEddy
 {

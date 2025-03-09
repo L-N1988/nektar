@@ -55,7 +55,7 @@ public:
     static std::string type;
 
 protected:
-    DiffusionLDGNS();
+    DiffusionLDGNS() = default;
 
     /// Penalty coefficient for LDGNS
     NekDouble m_C11;

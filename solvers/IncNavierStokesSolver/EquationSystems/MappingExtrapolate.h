@@ -51,6 +51,8 @@ typedef std::shared_ptr<MappingExtrapolate> MappingExtrapolateSharedPtr;
 class MappingExtrapolate : public StandardExtrapolate
 {
 public:
+    friend class MemoryManager<MappingExtrapolate>;
+
     /// Creates an instance of this class
     static ExtrapolateSharedPtr create(
         const LibUtilities::SessionReaderSharedPtr &pSession,
@@ -74,15 +76,15 @@ public:
         const Array<OneD, const Array<OneD, NekDouble>> &N,
         NekDouble kinvis) override;
 
+    ~MappingExtrapolate() override = default;
+
+protected:
     MappingExtrapolate(const LibUtilities::SessionReaderSharedPtr pSession,
                        Array<OneD, MultiRegions::ExpListSharedPtr> pFields,
                        MultiRegions::ExpListSharedPtr pPressure,
                        const Array<OneD, int> pVel,
                        const SolverUtils::AdvectionSharedPtr advObject);
 
-    ~MappingExtrapolate() override;
-
-protected:
     // Mapping object
     GlobalMapping::MappingSharedPtr m_mapping;
 

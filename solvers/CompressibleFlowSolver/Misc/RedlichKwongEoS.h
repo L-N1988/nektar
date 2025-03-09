@@ -94,7 +94,7 @@ protected:
 private:
     RedlichKwongEoS(const LibUtilities::SessionReaderSharedPtr &pSession);
 
-    ~RedlichKwongEoS(void) override{};
+    ~RedlichKwongEoS(void) override = default;
 
     // Alpha term of Redlich-Kwong EoS ( 1.0/sqrt(Tr))
     template <class T, typename = typename std::enable_if<

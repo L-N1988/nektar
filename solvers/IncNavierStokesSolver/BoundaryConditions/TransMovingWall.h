@@ -66,7 +66,7 @@ public:
 
     static std::string className;
 
-    ~TransMovingWall() override;
+    ~TransMovingWall() override = default;
 
 protected:
     void v_Initialise(

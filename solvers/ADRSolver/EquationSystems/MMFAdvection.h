@@ -58,6 +58,7 @@ const char *const TestTypeMap[] = {
 
 namespace Nektar
 {
+
 class MMFAdvection : public SolverUtils::MMFSystem,
                      public SolverUtils::AdvectionSystem
 {
@@ -74,6 +75,7 @@ public:
         p->InitObject();
         return p;
     }
+
     /// Name of class
     static std::string className;
 
@@ -164,6 +166,7 @@ protected:
 
 private:
 };
+
 } // namespace Nektar
 
 #endif

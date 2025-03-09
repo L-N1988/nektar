@@ -39,6 +39,7 @@
 
 namespace Nektar
 {
+
 class Poisson : public Laplace
 {
 public:
@@ -71,6 +72,7 @@ protected:
 private:
     Array<OneD, bool> v_GetSystemSingularChecks() override;
 };
+
 } // namespace Nektar
 
 #endif

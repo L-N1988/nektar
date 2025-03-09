@@ -34,11 +34,10 @@
 
 #include <CompressibleFlowSolver/EquationSystems/NavierStokesImplicitCFE.h>
 
-using namespace std;
-
 namespace Nektar
 {
-string NavierStokesImplicitCFE::className =
+
+std::string NavierStokesImplicitCFE::className =
     SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
         "NavierStokesImplicitCFE", NavierStokesImplicitCFE::create,
         "NavierStokes equations in conservative variables.");

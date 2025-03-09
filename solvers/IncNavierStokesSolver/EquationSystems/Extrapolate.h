@@ -79,7 +79,7 @@ public:
                 const Array<OneD, int> pVel,
                 const SolverUtils::AdvectionSharedPtr advObject);
 
-    virtual ~Extrapolate();
+    virtual ~Extrapolate() = default;
 
     void GenerateHOPBCMap(
         const LibUtilities::SessionReaderSharedPtr &pSsession);

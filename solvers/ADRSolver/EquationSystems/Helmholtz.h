@@ -39,6 +39,7 @@
 
 namespace Nektar
 {
+
 class Helmholtz : public Poisson
 {
 public:
@@ -70,6 +71,7 @@ protected:
 private:
     Array<OneD, bool> v_GetSystemSingularChecks() override;
 };
+
 } // namespace Nektar
 
 #endif

@@ -85,7 +85,7 @@ protected:
 private:
     IdealGasEoS(const LibUtilities::SessionReaderSharedPtr &pSession);
 
-    ~IdealGasEoS(void) override{};
+    ~IdealGasEoS(void) override = default;
 
     // type agnostic kernels
     template <class T, typename = typename std::enable_if<

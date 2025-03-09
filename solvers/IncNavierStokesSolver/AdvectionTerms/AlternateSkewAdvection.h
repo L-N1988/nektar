@@ -58,7 +58,7 @@ public:
 protected:
     AlternateSkewAdvection();
 
-    ~AlternateSkewAdvection() override;
+    ~AlternateSkewAdvection() override = default;
 
     void v_InitObject(
         LibUtilities::SessionReaderSharedPtr pSession,

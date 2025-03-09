@@ -42,6 +42,8 @@ namespace Nektar
 class VCSImplicit : public VelocityCorrectionScheme
 {
 public:
+    friend class MemoryManager<VCSImplicit>;
+
     /// Creates an instance of this class
     static SolverUtils::EquationSystemSharedPtr create(
         const LibUtilities::SessionReaderSharedPtr &pSession,

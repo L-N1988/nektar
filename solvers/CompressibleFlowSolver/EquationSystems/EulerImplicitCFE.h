@@ -81,5 +81,6 @@ protected:
 
     bool v_SupportsShockCaptType(const std::string type) const final;
 };
+
 } // namespace Nektar
 #endif

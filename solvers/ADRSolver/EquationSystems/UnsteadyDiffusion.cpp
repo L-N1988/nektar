@@ -34,11 +34,10 @@
 
 #include <ADRSolver/EquationSystems/UnsteadyDiffusion.h>
 
-using namespace std;
-
 namespace Nektar
 {
-string UnsteadyDiffusion::className =
+
+std::string UnsteadyDiffusion::className =
     GetEquationSystemFactory().RegisterCreatorFunction(
         "UnsteadyDiffusion", UnsteadyDiffusion::create);
 
@@ -132,7 +131,7 @@ void UnsteadyDiffusion::v_GenerateSummary(SummaryList &s)
     UnsteadySystem::v_GenerateSummary(s);
     if (m_useSpecVanVisc)
     {
-        stringstream ss;
+        std::stringstream ss;
         ss << "SVV (cut off = " << m_sVVCutoffRatio
            << ", coeff = " << m_sVVDiffCoeff << ")";
         AddSummaryItem(s, "Smoothing", ss.str());

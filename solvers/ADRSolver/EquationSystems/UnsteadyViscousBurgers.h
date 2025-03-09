@@ -40,6 +40,7 @@
 
 namespace Nektar
 {
+
 class UnsteadyViscousBurgers : public UnsteadyInviscidBurgers
 {
 public:
@@ -106,6 +107,7 @@ protected:
 private:
     NekDouble m_epsilon;
 };
+
 } // namespace Nektar
 
 #endif

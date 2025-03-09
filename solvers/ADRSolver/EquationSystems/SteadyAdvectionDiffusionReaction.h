@@ -39,6 +39,7 @@
 
 namespace Nektar
 {
+
 class SteadyAdvectionDiffusionReaction : public SteadyAdvectionDiffusion
 {
 public:
@@ -69,6 +70,7 @@ protected:
     void v_InitObject(bool DeclareFields = true) override;
     void v_GenerateSummary(SolverUtils::SummaryList &s) override;
 };
+
 } // namespace Nektar
 
 #endif

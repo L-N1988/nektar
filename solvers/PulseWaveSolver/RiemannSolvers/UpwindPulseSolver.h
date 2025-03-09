@@ -44,6 +44,7 @@ using namespace Nektar::SolverUtils;
 
 namespace Nektar
 {
+
 class UpwindPulseSolver : public RiemannSolver
 {
 public:
@@ -73,6 +74,7 @@ protected:
                              NekDouble A0, NekDouble beta, NekDouble n,
                              NekDouble alpha = 0.5);
 };
+
 } // namespace Nektar
 
 #endif

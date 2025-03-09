@@ -41,9 +41,12 @@
 
 namespace Nektar
 {
+
 class SmoothedProfileMethod : public VelocityCorrectionScheme
 {
 public:
+    friend class MemoryManager<SmoothedProfileMethod>;
+
     /// Creates an instance of this class
     static SolverUtils::EquationSystemSharedPtr create(
         const LibUtilities::SessionReaderSharedPtr &pSession,
@@ -59,18 +62,17 @@ public:
     /// Name of class
     static std::string className;
 
-    // Constructor
-    SmoothedProfileMethod(const LibUtilities::SessionReaderSharedPtr &pSession,
-                          const SpatialDomains::MeshGraphSharedPtr &pGraph);
-
     // Destructor
-    ~SmoothedProfileMethod() override;
+    ~SmoothedProfileMethod() override = default;
 
     void v_InitObject(bool DeclareField = true) override;
 
     void v_GenerateSummary(SolverUtils::SummaryList &s) override;
 
 protected:
+    SmoothedProfileMethod(const LibUtilities::SessionReaderSharedPtr &pSession,
+                          const SpatialDomains::MeshGraphSharedPtr &pGraph);
+
     /// Correction pressure field for SPM
     MultiRegions::ExpListSharedPtr m_pressureP;
     /// Velocity of the immersed body(ies)

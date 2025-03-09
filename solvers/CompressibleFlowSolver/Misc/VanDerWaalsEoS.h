@@ -88,7 +88,7 @@ protected:
 private:
     VanDerWaalsEoS(const LibUtilities::SessionReaderSharedPtr &pSession);
 
-    ~VanDerWaalsEoS(void) override{};
+    ~VanDerWaalsEoS(void) override = default;
 
     template <class T, typename = typename std::enable_if<
                            std::is_floating_point<T>::value ||

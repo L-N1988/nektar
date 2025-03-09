@@ -58,11 +58,12 @@ public:
         p->InitObject();
         return p;
     }
+
     /// Name of class
     static std::string className;
 
     /// Destructor
-    ~APE() override;
+    ~APE() override = default;
 
 protected:
     /// Initialises UnsteadySystem class members.

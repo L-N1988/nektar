@@ -37,6 +37,7 @@
 
 namespace Nektar
 {
+
 std::string UnsteadyInviscidBurgers::className =
     SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
         "UnsteadyInviscidBurgers", UnsteadyInviscidBurgers::create,
@@ -276,4 +277,5 @@ void UnsteadyInviscidBurgers::v_GenerateSummary(SolverUtils::SummaryList &s)
 {
     AdvectionSystem::v_GenerateSummary(s);
 }
+
 } // namespace Nektar

@@ -49,6 +49,7 @@
 
 namespace Nektar
 {
+
 class IncBaseCondition;
 typedef std::shared_ptr<IncBaseCondition> IncBaseConditionSharedPtr;
 
@@ -64,7 +65,7 @@ SOLVER_UTILS_EXPORT IncBCFactory &GetIncBCFactory();
 class IncBaseCondition
 {
 public:
-    virtual ~IncBaseCondition();
+    virtual ~IncBaseCondition() = default;
 
     void Update(const Array<OneD, const Array<OneD, NekDouble>> &fields,
                 const Array<OneD, const Array<OneD, NekDouble>> &Adv,
@@ -106,11 +107,6 @@ protected:
 
     void AddRigidBodyAcc(Array<OneD, Array<OneD, NekDouble>> &N,
                          std::map<std::string, NekDouble> &params, int npts0);
-
-    // void AddDuDtPressureBCs(
-    //    const Array<OneD, const Array<OneD, NekDouble>> &fields,
-    //    Array<OneD, Array<OneD, NekDouble>> &N,
-    //    std::map<std::string, NekDouble> &params);
 
     void RigidBodyVelocity(Array<OneD, Array<OneD, NekDouble>> &velocities,
                            std::map<std::string, NekDouble> &params, int npts0);

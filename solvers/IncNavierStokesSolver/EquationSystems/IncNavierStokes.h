@@ -148,7 +148,7 @@ class IncNavierStokes : public SolverUtils::AdvectionSystem,
 {
 public:
     // Destructor
-    ~IncNavierStokes() override;
+    ~IncNavierStokes() override = default;
 
     void v_InitObject(bool DeclareField = true) override;
 

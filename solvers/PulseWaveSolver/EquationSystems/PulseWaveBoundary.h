@@ -66,7 +66,7 @@ public:
                       const LibUtilities::SessionReaderSharedPtr &pSession,
                       PulseWavePressureAreaSharedPtr &pressureArea);
 
-    virtual ~PulseWaveBoundary();
+    virtual ~PulseWaveBoundary() = default;
 
     inline void DoBoundary(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,

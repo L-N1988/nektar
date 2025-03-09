@@ -41,6 +41,7 @@ using namespace Nektar::SolverUtils;
 
 namespace Nektar
 {
+
 class Laplace : public EquationSystem
 {
 public:
@@ -76,6 +77,7 @@ protected:
 private:
     Array<OneD, bool> v_GetSystemSingularChecks() override;
 };
+
 } // namespace Nektar
 
 #endif

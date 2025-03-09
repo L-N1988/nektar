@@ -42,6 +42,7 @@ using namespace Nektar::SolverUtils;
 
 namespace Nektar
 {
+
 class UnsteadyDiffusion : public UnsteadySystem
 {
 public:
@@ -58,6 +59,7 @@ public:
         p->InitObject();
         return p;
     }
+
     /// Name of class
     static std::string className;
 
@@ -97,6 +99,7 @@ protected:
         Array<OneD, Array<OneD, NekDouble>> &outarray, NekDouble time,
         NekDouble lambda);
 };
+
 } // namespace Nektar
 
 #endif

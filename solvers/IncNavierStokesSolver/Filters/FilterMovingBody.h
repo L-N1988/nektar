@@ -66,11 +66,7 @@ public:
 
     static std::string className;
 
-    FilterMovingBody(
-        const LibUtilities::SessionReaderSharedPtr &pSession,
-        const std::shared_ptr<SolverUtils::EquationSystem> &pEquation,
-        const ParamMap &pParams);
-    ~FilterMovingBody() override;
+    ~FilterMovingBody() override = default;
 
     void v_Initialise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
@@ -100,6 +96,11 @@ public:
     bool v_IsTimeDependent() override;
 
 private:
+    FilterMovingBody(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const std::shared_ptr<SolverUtils::EquationSystem> &pEquation,
+        const ParamMap &pParams);
+
     /// ID's of boundary regions where we want the forces
     std::vector<unsigned int> m_boundaryRegionsIdList;
     /// Determines if a given Boundary Region is in

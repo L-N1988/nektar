@@ -58,11 +58,12 @@ public:
         p->InitObject();
         return p;
     }
+
     /// Name of class
     static std::string className;
 
     /// Destructor
-    ~LEE() override;
+    ~LEE() override = default;
 
 protected:
     /// Initialises UnsteadySystem class members.
@@ -83,6 +84,7 @@ protected:
         Array<OneD, Array<OneD, NekDouble>> &BfFwd,
         Array<OneD, Array<OneD, NekDouble>> &physarray) override;
 };
+
 } // namespace Nektar
 
 #endif

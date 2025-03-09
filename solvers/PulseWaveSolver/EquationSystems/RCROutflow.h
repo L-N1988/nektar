@@ -52,6 +52,8 @@ typedef std::shared_ptr<RCROutflow> RCROutflowSharedPtr;
 class RCROutflow : public PulseWaveBoundary
 {
 public:
+    friend class MemoryManager<RCROutflow>;
+
     // Creates an instance of this class
     static PulseWaveBoundarySharedPtr create(
         Array<OneD, MultiRegions::ExpListSharedPtr> &pVessel,
@@ -65,13 +67,13 @@ public:
     // Name of class
     static std::string className;
 
+    ~RCROutflow() override = default;
+
+protected:
     RCROutflow(Array<OneD, MultiRegions::ExpListSharedPtr> pVessel,
                const LibUtilities::SessionReaderSharedPtr pSession,
                PulseWavePressureAreaSharedPtr pressureArea);
 
-    ~RCROutflow() override;
-
-protected:
     void v_DoBoundary(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
                       Array<OneD, Array<OneD, NekDouble>> &A_0,
                       Array<OneD, Array<OneD, NekDouble>> &beta,
