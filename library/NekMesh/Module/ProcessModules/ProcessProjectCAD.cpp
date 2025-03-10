@@ -316,8 +316,8 @@ void ProcessProjectCAD::Process()
 
     // 6. Update the secondary tolerances on already projected nodes and do the
     //  final Linking Vertex - CAD Surface / Curve
-    tolv1 = tolv1*0.10, tolv2 = tolv2*0.10;
-    LinkVertexToCAD(m_mesh, false, lockedNodes, tolv1, tolv2, rtree, rtreeCurve,
+    tolv1 = tolv1*0.1, tolv2 = tolv2*0.1;
+    LinkVertexToCAD(m_mesh, true, lockedNodes, tolv1, tolv2, rtree, rtreeCurve,
                     rtreeNode);
 
     // Diagnostics();
@@ -749,7 +749,7 @@ void ProcessProjectCAD::LinkVertexToCAD(
                     }
                     else
                     {
-                        m_log(VERBOSE) << "Vertex " << vertex << " not close enough to the CAD Curve " << endl;
+                        //m_log(VERBOSE) << "Vertex " << vertex << " not close enough to the CAD Curve " << endl;
                     }
                 }
                 else if(result.size()==0)
@@ -795,7 +795,7 @@ void ProcessProjectCAD::LinkVertexToCAD(
                         }
                         else
                         {
-                            m_log(VERBOSE) << "Vertex " << vertex << " not close enough to the CAD Curve " << dist0  << " tol = " << tolv2 << endl;
+                            //m_log(VERBOSE) << "Vertex " << vertex << " not close enough to the CAD Curve " << dist0  << " tol = " << tolv2 << endl;
                         }
     
                     }
@@ -844,7 +844,12 @@ void ProcessProjectCAD::LinkVertexToCAD(
 
 void ProcessProjectCAD::LinkEdgeToCAD(EdgeSet &surfEdges, NekDouble tolv1)
 {
-    // Every Edge needs to have only 1 CAD Object CADCurve or CADSuf
+    // Every Edge needs to have only 1 CAD Object CADCurve or CADSurf
+    // This is not necessary to be perfect as it will be filled by the Associate Faces 
+    // However it can be used as a verification for the FACE association in the future
+    // It is beneficial to associate the edge to CAD Curve due to optimization and
+    // projection sliding on the CAD Curve is more rorbust than to the CADSurf . 
+
     for (auto edge : surfEdges)
     {
         NodeSharedPtr v1 = edge->m_n1;
@@ -855,7 +860,7 @@ void ProcessProjectCAD::LinkEdgeToCAD(EdgeSet &surfEdges, NekDouble tolv1)
             continue;
         }
 
-        // Get CAD Curve 
+        // 1. Get CAD Curve based on the vertex CADCurves - should be 99% of CADCurve edges
         if(v1->GetCADCurves().size() && v2->GetCADCurves().size())
         {
             if(v1->GetCADCurves()[0] == v2->GetCADCurves()[0])
@@ -874,20 +879,20 @@ void ProcessProjectCAD::LinkEdgeToCAD(EdgeSet &surfEdges, NekDouble tolv1)
                 }
                 else if(cmn.size() >1 )
                 {
+                    // This is often the case when you have two CAD Curves that are the same, but  topologically different and OCE CAD Sewing (sew_tolerance) has not merged them 
                     m_log(WARNING) << "Edge with different CAD Curves cmn.size=  " << cmn.size() << " v1 = "<< edge->m_n1 << " v2 = " << edge->m_n2  << endl ;
-
                 }
             }
         }
 
-        // Get CAD Surf
+        // 2. Try to associate the edge to CADCurves based on the vertex CADSurf 
         vector<int> cmn =
             IntersectCADSurf(v1->GetCADSurfs(), v2->GetCADSurfs());
 
         if (cmn.size() == 0)
         {
             // no CAD surface found for the edge (CASE3)
-            cout << "Case 3 edge association v1 = " << v1 << "  = v2 " << v2<< endl;
+            //m_log(VERBOSE) << "Case 3 edge association (NO-CADSurf or Curve) v1 = " << v1 << "  = v2 " << v2<< endl;
             continue;
         }
 
@@ -898,11 +903,10 @@ void ProcessProjectCAD::LinkEdgeToCAD(EdgeSet &surfEdges, NekDouble tolv1)
         }
         else if (cmn.size() == 2)
         {
-            // Could be CAD-curve or CAD-surface (CASE2)
+            // N=2 CAD Surfaces could be CAD-curve or CAD-surface (CASE2)
+            // Try to find the correct edge topologically 
             vector<CADSurfSharedPtr> v1_CAD = v1->GetCADSurfs();
             vector<CADSurfSharedPtr> v2_CAD = v2->GetCADSurfs();
-
-            // Associate to the closest CAD Surface
 
             // 1.Create vi1 , vi2
             vector<int> CADCurves_uv1;
@@ -910,7 +914,8 @@ void ProcessProjectCAD::LinkEdgeToCAD(EdgeSet &surfEdges, NekDouble tolv1)
 
             CADSurfSharedPtr EdgeSurf1 = m_mesh->m_cad->GetSurf(cmn[0]);
             CADSurfSharedPtr EdgeSurf2 = m_mesh->m_cad->GetSurf(cmn[1]);
-
+            
+            // Checking overlapping CADCurves between the surfaces
             for (auto EdgeLoop : EdgeSurf1->GetEdges())
             {
                 for (auto CADCurve : EdgeLoop->edges)
@@ -955,9 +960,11 @@ void ProcessProjectCAD::LinkEdgeToCAD(EdgeSet &surfEdges, NekDouble tolv1)
                 }
                 else
                 {
+                    // Associate to one of the CADSurf.
                     m_log(VERBOSE)
                         << " dist > distol (cmnCADCurve.size=1) = " << dist0
                         << " " << dist1 << endl;
+
                 }
                 /*
                                         if((dist0 < tolDist) && (dist1 <
@@ -1057,11 +1064,24 @@ void ProcessProjectCAD::LinkEdgeToCAD(EdgeSet &surfEdges, NekDouble tolv1)
                                         }
                 */
             }
-            else if (commonCADCurves.size() == 2)
+            else if (commonCADCurves.size() >= 2)
             {
-                m_log(WARNING)
-                    << " CASE commonCADCurves.size()==2 for comn.size()  = 2 "
+                // common when the CAD is not perfect (2 CADcurves that overlap are two different topological objects )
+                // in this case just take the curve and assign the closest one within tolv2*0.1 tolerance
+                // this is a stricter due to the 
+                
+                // Another test case is a CADSurf like NACA, where it fills the 
+                // DO WE NEED THIS ? 
+                m_log(VERBOSE)
+                    << "edge CASE commonCADCurves.size()==2 for comn.size()  = 2 "
                     << endl;
+
+                // for(auto it : commonCADCurves)
+                // {
+                //     cout << it << endl ; 
+                // }
+                    
+
                 // // << endl ;
                 // Array<OneD, NekDouble> xyz1 = edge->m_n1->GetLoc();
                 // Array<OneD, NekDouble> xyz2 = edge->m_n2->GetLoc();
@@ -1178,22 +1198,18 @@ void ProcessProjectCAD::LinkEdgeToCAD(EdgeSet &surfEdges, NekDouble tolv1)
                 // // cout << "end edge commonCADCurves.size()==2 " << endl
                 // // ;
             }
-            else
-            {
-                // Associate to the closest CAD Surface
-                m_log(WARNING)
-                    << "too many common CADcurves for Edge association  "
-                       "(cmn>2) will use the element to associate. "
-                    << endl;
-            }
+
         }
         else
         {
-            // Associate to the closest CAD Surface
-            m_log(WARNING) << "too many common surfaces for Edge association  "
+            // If more than 2 common CAD Surfaces are present, we do not associate CADCurve because it is too risky
+            // Closest CAD Surf 
+            m_log(VERBOSE) << "too many common surfaces for Edge association  "
                               "(cmn>2) will use the element to associate. "
                            << endl;
         }
+        
+        // if no CAD Curves are associated, the CAD Surf will be associated through the Face Association.
     }
 }
 
@@ -1262,7 +1278,7 @@ void ProcessProjectCAD::ProjectEdges(
     LibUtilities::PointsManager()[ekey]->GetPoints(gll);
 
     // make surface edges high-order
-    int cnt = 0;
+    int cnt = 0 ; int cnt1= 0;
     for (auto i = surfEdges.begin(); i != surfEdges.end(); i++)
     {
         // IF the edge is already associated with a CAD surface, HOSurf will do
@@ -1359,11 +1375,10 @@ void ProcessProjectCAD::ProjectEdges(
             }
         }
         else if (cmn.size() == 0)
-        {
+        {   
             // projection, if the projection requires more than two surfaces
             // including the edge nodes, then,  in theory projection shouldnt be
             // used
-
             vi1vi2.insert(vi1vi2.end(), vi1.begin(), vi1.end());
             vi1vi2.insert(vi1vi2.end(), vi2.begin(), vi2.end());
 
@@ -1403,10 +1418,13 @@ void ProcessProjectCAD::ProjectEdges(
 
                 (*i)->m_edgeNodes.push_back(nn);
             }
+            cnt1++; 
+
         }
     }
     
-    m_log(VERBOSE) << "CASE3 Projected edges No CAD N= " << cnt << endl;
+    m_log(VERBOSE) << "Edges No CAD N= " << cnt << endl;
+    m_log(VERBOSE) << "Edges No CAD Projected N= " << cnt1 << endl;
 
 }
 
@@ -1604,7 +1622,9 @@ void ProcessProjectCAD::LinkFaceToCAD()
         {
             // CASE 2 - 2 or more CADSurfs
             // Project the face
-            cout << " face cmn.size() = " << commonCAD.size() << endl;
+            m_log(VERBOSE) << " face cmn.size() = " << commonCAD.size() << endl;
+            //element->m_parentCAD = m_mesh->m_cad->GetSurf(commonCAD[0]);
+
         }
     }
 
