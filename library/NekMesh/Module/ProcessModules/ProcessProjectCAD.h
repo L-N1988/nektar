@@ -104,7 +104,7 @@ private:
     bool FindAndProject(bgi::rtree<boxI, bgi::quadratic<16>> &rtree,
                         std::array<NekDouble, 3> &in, int &surf);
     void LinkEdgeToCAD(EdgeSet &surfEdges, NekDouble tolv1);
-    void LinkFaceToCAD();
+    void LinkFaceToCAD(NekDouble tolv1);
 
     // for CASE 3 elements between two surfaces
     void ProjectEdges(EdgeSet &surfEdges, int order,

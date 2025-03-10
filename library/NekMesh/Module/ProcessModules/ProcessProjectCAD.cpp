@@ -327,7 +327,7 @@ void ProcessProjectCAD::Process()
     LinkEdgeToCAD(surfEdges, tolv1);
 
     // // 8. Associate Faces to CAD
-    LinkFaceToCAD();
+    LinkFaceToCAD(tolv1);
 
     // Project the Edges to CAD that
     ProjectEdges(surfEdges, order, rtree);
@@ -1552,7 +1552,7 @@ void ProcessProjectCAD::Diagnostics()
     }
 }
 
-void ProcessProjectCAD::LinkFaceToCAD()
+void ProcessProjectCAD::LinkFaceToCAD( NekDouble tolv1)
 {
     for (auto element : m_mesh->m_element[2])
     {
@@ -1605,7 +1605,7 @@ void ProcessProjectCAD::LinkFaceToCAD()
             commonCAD = temp;
         }
 
-        // commonCAD CADSurf found
+        // commonCAD CADSurf found in the individual vertices
         if (commonCAD.size() == 1)
         {
             // Internal element based on the
@@ -1618,12 +1618,72 @@ void ProcessProjectCAD::LinkFaceToCAD()
                 }
             }
         }
-        else if(commonCAD.size()>0)
+        else
         {
-            // CASE 2 - 2 or more CADSurfs
-            // Project the face
-            m_log(VERBOSE) << " face cmn.size() = " << commonCAD.size() << endl;
-            //element->m_parentCAD = m_mesh->m_cad->GetSurf(commonCAD[0]);
+            // CASE 2 - 2 or more CADSurfs (max 1-2% of the faces)
+            // This could be a trailing edge surface for example 
+            // Sliver Surface on IFW, etc 
+            // or very thin surface, where all vertices share >1 CAD Surf 
+            // Solution :: use edge nodes and face nodes to check which one is closest 
+            // FaceNode Effect x2, Edge 
+        
+            // Get center of linear triag/quad
+            std::array<NekDouble, 3> center = {0.0, 0.0, 0.0};
+            for(auto vert : vertices)
+            {
+                center[0] += vert->m_x / vertices.size(); 
+                center[1] += vert->m_y / vertices.size(); 
+                center[2] += vert->m_z / vertices.size(); 
+            }
+        
+            // Check mid of the distance of the centroids of edges and mid face to every CAD 
+             NekDouble minDist = tolv1*10.0; int minID = -1 ; 
+            for(int id : commonCAD)
+            {
+                std::array<NekDouble, 4> lim ; 
+                CADSurfSharedPtr surf = m_mesh->m_cad->GetSurf(id)  ; 
+                surf->GetBounds(lim[0],lim[1],lim[2],lim[3]) ; 
+                std::array<NekDouble, 3> loc = {0.0, 0.0, 0.0};
+                NekDouble distoveral = 0.0 ;
+                for(auto edge : edges )
+                { 
+                    loc[0] = ( edge->m_n1->GetLoc()[0] + edge->m_n2->GetLoc()[0] ) * 0.5 ;  
+                    loc[1] = ( edge->m_n1->GetLoc()[1] + edge->m_n2->GetLoc()[1] ) * 0.5 ;  
+                    loc[2] = ( edge->m_n1->GetLoc()[2] + edge->m_n2->GetLoc()[2] ) * 0.5 ;  
+
+                    NekDouble dist = 1e7 ; 
+                    
+                    std::array<NekDouble, 2> uv = surf->locuv(loc , dist, lim[0], lim[1],lim[2], lim[3]) ; 
+                    distoveral += dist ; 
+
+                }
+
+                NekDouble dist = 1e7 ; 
+                std::array<NekDouble, 2> uv = surf->locuv(center , dist) ; 
+                distoveral += dist ; 
+                
+                if(distoveral < minDist )
+                {
+                    minID = id ; 
+                    minDist = distoveral ; 
+                }
+            }
+
+            if(minID!=-1)
+            { 
+                element->m_parentCAD = m_mesh->m_cad->GetSurf(minID);
+                for(auto edge : edges )
+                {
+                    if(!edge->m_parentCAD)
+                    {
+                        edge->m_parentCAD = m_mesh->m_cad->GetSurf(minID);
+                    }
+                } 
+            }
+
+
+            // Choose the smallest one if within 1/10 min edge 
+
 
         }
     }
