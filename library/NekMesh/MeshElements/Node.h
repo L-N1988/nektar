@@ -302,6 +302,18 @@ public:
         m_CADSurfList.clear();
     }
 
+    void ClearCADCurves()
+    {
+        m_CADCurveList.clear();
+    }
+
+    void ClearCADVert()
+    {
+        m_CADVer.reset();
+    }
+
+
+
     int GetNumCadCurve()
     {
         return m_CADCurveList.size();
