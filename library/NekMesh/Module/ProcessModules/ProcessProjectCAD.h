@@ -91,7 +91,7 @@ private:
     void CreateBoundingBoxes(bgi::rtree<boxI, bgi::quadratic<16>> &rtree,
                              bgi::rtree<boxI, bgi::quadratic<16>> &rtreeCurve,
                              bgi::rtree<boxI, bgi::quadratic<16>> &rtreeNode,
-                             NekDouble scale);
+                             NekDouble tolv1, NekDouble scale);
     bool IsNotValid(std::vector<NekMesh::ElementSharedPtr> &els);
     void CalculateMinEdgeLength();
     void Auxilaries();
@@ -111,6 +111,8 @@ private:
                       bgi::rtree<boxI, bgi::quadratic<16>> &rtree);
     std::vector<int> IntersectCADSurf(std::vector<CADSurfSharedPtr> v1_CADs,
                                       std::vector<CADSurfSharedPtr> v2_CADs);
+
+    std::vector<int> IntersectCADCurve(std::vector<CADCurveSharedPtr> v1_CADs, std::vector<CADCurveSharedPtr> v2_CADs); 
 
     void Diagnostics();
     void ExportCAD();
