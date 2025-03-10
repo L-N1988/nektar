@@ -333,12 +333,20 @@ void HOSurfaceMesh::Process()
                 {
                     // For the third-party case, we would like reavaluate the uv
                     // of the vertices for robustness (cylinder bug in the past)
-                    NekDouble dist, Umin, Usup, Vmin, Vsup;
+                    NekDouble dist0, dist1, Umin, Usup, Vmin, Vsup;
                     s->GetBounds(Umin, Usup, Vmin, Vsup);
-                    uvb = s->locuv(e->m_n1->GetLoc(), dist, Umin, Usup, Vmin,
+                    uvb = s->locuv(e->m_n1->GetLoc(), dist0, Umin, Usup, Vmin,
                                    Vsup);
-                    uve = s->locuv(e->m_n2->GetLoc(), dist, Umin, Usup, Vmin,
+                    uve = s->locuv(e->m_n2->GetLoc(), dist1, Umin, Usup, Vmin,
                                    Vsup);
+                    // This check is necessary if identification is not perfect, especially in periodic curves/surfaces
+                    NekDouble tol = e->m_n1->Distance(e->m_n2) * 0.01 ; 
+                    if(dist0 > tol || dist1 > tol)
+                    {
+                        ToBreak = 1 ; 
+                        m_log(WARNING) << "Edge vertices too far from CADSUrf dist = " << dist0 << " | " <<  dist1  << "  tol = " <<  tol  << endl ; 
+                        continue ; 
+                    }
                 }
                 else
                 {
@@ -571,7 +579,7 @@ void HOSurfaceMesh::Process()
         }
     }
 
-    cout << '\n' ; 
+    cout << '\n';
     m_log(WARNING) << "Surface Optimization (T/F)  = " << qOpti << endl;
     m_log(WARNING) << "There were " << cntBreak
                    << " 2D Surface Faces that were skipped for HOSurfModule. "
