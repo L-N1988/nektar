@@ -112,7 +112,8 @@ private:
     std::vector<int> IntersectCADSurf(std::vector<CADSurfSharedPtr> v1_CADs,
                                       std::vector<CADSurfSharedPtr> v2_CADs);
 
-    std::vector<int> IntersectCADCurve(std::vector<CADCurveSharedPtr> v1_CADs, std::vector<CADCurveSharedPtr> v2_CADs); 
+    std::vector<int> IntersectCADCurve(std::vector<CADCurveSharedPtr> v1_CADs,
+                                       std::vector<CADCurveSharedPtr> v2_CADs);
 
     void Diagnostics();
     void ExportCAD();

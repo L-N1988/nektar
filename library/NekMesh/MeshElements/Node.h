@@ -312,8 +312,6 @@ public:
         m_CADVer.reset();
     }
 
-
-
     int GetNumCadCurve()
     {
         return m_CADCurveList.size();
