@@ -65,7 +65,7 @@ ProcessProjectCAD::ProcessProjectCAD(MeshSharedPtr m) : ProcessModule(m)
 {
     m_config["file"]  = ConfigOption(false, "", "CAD file");
     m_config["order"] = ConfigOption(false, "4", "Enforce a polynomial order");
-    m_config["surfopti"] = ConfigOption(false, "1", "Run HO-Surface Module");
+    m_config["surfopti"] = ConfigOption(true, "1", "Run HO-Surface Module");
     m_config["varopti"] =
         ConfigOption(false, "0", "Run the Variational Optmiser");
     m_config["cLength"] =
@@ -76,6 +76,8 @@ ProcessProjectCAD::ProcessProjectCAD(MeshSharedPtr m) : ProcessModule(m)
     m_config["tolv2"] = ConfigOption(
         false, "1e-5",
         " (Optional) max distance of initial Vertex to CADSurface");
+    m_config["ho"] =
+        ConfigOption(false, "", "Pass when the input is already HO-mesh.");
 }
 
 ProcessProjectCAD::~ProcessProjectCAD()
@@ -331,6 +333,11 @@ void ProcessProjectCAD::Process()
 
     // Project the Edges to CAD that
     ProjectEdges(surfEdges, order, rtree);
+
+    if (m_config["ho"].beenSet)
+    {
+        LinkHOtoCAD(surfEdges, tolv1 * 10.0);
+    }
 
     ////**** HOSurface ****////
     int m_surfopti         = m_config["surfopti"].as<bool>();
@@ -1718,4 +1725,83 @@ void ProcessProjectCAD::LinkFaceToCAD(NekDouble tolv1)
     }
 }
 
+void ProcessProjectCAD::LinkHOtoCAD(EdgeSet &surfEdges, NekDouble tolv1)
+{
+    for (auto edge : surfEdges)
+    {
+        if (edge->m_parentCAD && edge->m_edgeNodes.size() > 0)
+        {
+            // loop over the edges and assign CADCurve
+            if (edge->m_parentCAD->GetType() == 1)
+            {
+                // CAD Curve
+                CADCurveSharedPtr curve =
+                    m_mesh->m_cad->GetCurve(edge->m_parentCAD->GetId());
+                std::array<NekDouble, 2> lim;
+                curve->GetBounds(lim[0], lim[1]);
+                for (auto node : edge->m_edgeNodes)
+                {
+                    NekDouble dist               = 1e6;
+                    std::array<NekDouble, 3> loc = node->GetLoc();
+                    NekDouble t = curve->loct(loc, dist, lim[0], lim[1]);
+                    if (dist < tolv1)
+                    {
+                        // Just give the node a parametric location
+                        // DO NOT Project the node for the moment !
+                        node->SetCADCurve(curve, t);
+                    }
+                }
+            }
+            else if (edge->m_parentCAD->GetType() == 2)
+            {
+                // CAD Surf
+                CADSurfSharedPtr surf =
+                    m_mesh->m_cad->GetSurf(edge->m_parentCAD->GetId());
+                std::array<NekDouble, 4> lim;
+                surf->GetBounds(lim[0], lim[1], lim[2], lim[3]);
+                for (auto node : edge->m_edgeNodes)
+                {
+                    NekDouble dist               = 1e6;
+                    std::array<NekDouble, 3> loc = node->GetLoc();
+                    std::array<NekDouble, 2> uv =
+                        surf->locuv(loc, dist, lim[0], lim[1], lim[2], lim[3]);
+                    if (dist < tolv1)
+                    {
+                        // Just give the node a parametric location
+                        // DO NOT Project the node for the moment !
+                        node->SetCADSurf(surf, uv);
+                    }
+                }
+            }
+        }
+    }
+
+    for (auto face : m_mesh->m_element[2])
+    {
+        if (face->m_parentCAD)
+        {
+            CADSurfSharedPtr surf =
+                m_mesh->m_cad->GetSurf(face->m_parentCAD->GetId());
+            std::array<NekDouble, 4> lim;
+            surf->GetBounds(lim[0], lim[1], lim[2], lim[3]);
+
+            vector<NodeSharedPtr> nodelist;
+            face->GetCurvedNodes(nodelist);
+            for (auto node : nodelist)
+            {
+                NekDouble dist               = 1e6;
+                std::array<NekDouble, 3> loc = node->GetLoc();
+                std::array<NekDouble, 2> uv =
+                    surf->locuv(loc, dist, lim[0], lim[1], lim[2], lim[3]);
+                if (dist < tolv1 && node->GetCADCurves().size() == 0)
+                {
+                    // Just give the node a parametric location
+                    // DO NOT Project the node for the moment !
+                    // Prioritise the CADCurve allocation if present !
+                    node->SetCADSurf(surf, uv);
+                }
+            }
+        }
+    }
+}
 } // namespace Nektar::NekMesh

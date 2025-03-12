@@ -114,6 +114,7 @@ private:
 
     std::vector<int> IntersectCADCurve(std::vector<CADCurveSharedPtr> v1_CADs,
                                        std::vector<CADCurveSharedPtr> v2_CADs);
+    void LinkHOtoCAD(EdgeSet &surfEdges, NekDouble tolv1);
 
     void Diagnostics();
     void ExportCAD();
