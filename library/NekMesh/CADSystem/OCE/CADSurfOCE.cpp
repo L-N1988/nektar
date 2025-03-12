@@ -213,7 +213,6 @@ std::array<NekDouble, 2> CADSurfOCE::locuv(std::array<NekDouble, 3> p,
     }
     else
     {
-        std::array<NekDouble, 3> out;
         GeomAPI_ProjectPointOnSurf proj(loc, m_s, Umin, Usup, Vmin, Vsup,
                                         Precision::Confusion(),
                                         Extrema_ExtAlgo_Grad);
