@@ -339,13 +339,17 @@ void HOSurfaceMesh::Process()
                                    Vsup);
                     uve = s->locuv(e->m_n2->GetLoc(), dist1, Umin, Usup, Vmin,
                                    Vsup);
-                    // This check is necessary if identification is not perfect, especially in periodic curves/surfaces
-                    NekDouble tol = e->m_n1->Distance(e->m_n2) * 0.01 ; 
-                    if(dist0 > tol || dist1 > tol)
+                    // This check is necessary if identification is not perfect,
+                    // especially in periodic curves/surfaces
+                    NekDouble tol = e->m_n1->Distance(e->m_n2) * 0.01;
+                    if (dist0 > tol || dist1 > tol)
                     {
-                        ToBreak = 1 ; 
-                        m_log(WARNING) << "Edge vertices too far from CADSUrf dist = " << dist0 << " | " <<  dist1  << "  tol = " <<  tol  << endl ; 
-                        continue ; 
+                        ToBreak = 1;
+                        m_log(WARNING)
+                            << "Edge vertices too far from CADSUrf dist = "
+                            << dist0 << " | " << dist1 << "  tol = " << tol
+                            << endl;
+                        continue;
                     }
                 }
                 else

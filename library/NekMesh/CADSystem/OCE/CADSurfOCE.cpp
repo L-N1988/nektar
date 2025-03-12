@@ -119,12 +119,12 @@ std::array<NekDouble, 6> CADSurfOCE::BoundingBox()
 
 std::array<NekDouble, 6> CADSurfOCE::BoundingBox(NekDouble scale)
 {
-    BRepMesh_IncrementalMesh brmsh(m_shape, 0.005*scale);
+    BRepMesh_IncrementalMesh brmsh(m_shape, 0.005 * scale);
 
     Bnd_Box B;
     BRepBndLib::Add(m_shape, B);
     NekDouble e = sqrt(B.SquareExtent()) * 0.01 * scale;
-    e           = min(e, 5e-3*scale);
+    e           = min(e, 5e-3 * scale);
     B.Enlarge(e);
 
     std::array<NekDouble, 6> ret;
