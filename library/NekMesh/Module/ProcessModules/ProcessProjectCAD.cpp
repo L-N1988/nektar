@@ -78,6 +78,7 @@ ProcessProjectCAD::ProcessProjectCAD(MeshSharedPtr m) : ProcessModule(m)
         " (Optional) max distance of initial Vertex to CADSurface");
     m_config["ho"] =
         ConfigOption(false, "", "Pass when the input is already HO-mesh.");
+    m_config["extract"] = ConfigOption(false, "", "Export the CAD to cad.txt.");
 }
 
 ProcessProjectCAD::~ProcessProjectCAD()
@@ -367,7 +368,11 @@ void ProcessProjectCAD::Process()
     }
 
     Diagnostics();
-    // ExportCAD();
+    if (m_config["extract"].beenSet)
+    {
+        m_log(VERBOSE) << "Extract CAD " << endl;
+        ExtractCAD();
+    }
 
     m_log(VERBOSE) << "HO-Surface CAD complete." << endl;
 }
