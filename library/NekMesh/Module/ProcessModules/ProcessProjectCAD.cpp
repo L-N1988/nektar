@@ -1049,7 +1049,7 @@ void ProcessProjectCAD::LinkEdgeToCAD(EdgeSet &surfEdges, NekDouble tolv1)
                                             else
                                             {
                                                     edge->m_parentCAD =
-                    NULL ; m_log(WARNING) <<  "Parametric m_n1 on
+                    nulptr ; m_log(WARNING) <<  "Parametric m_n1 on
                     CADCurve cmn=1 has been too far away from the Curve
                     Bounds " <<  endl ;
                                             }
@@ -1086,7 +1086,7 @@ void ProcessProjectCAD::LinkEdgeToCAD(EdgeSet &surfEdges, NekDouble tolv1)
                                             }
                                             else
                                             {
-                                                edge->m_parentCAD = NULL
+                                                edge->m_parentCAD = nulptr
                     ; m_log(WARNING) <<  "Parametric m_n2 on CADCurve
                     cmn=1 has been too far away from the Curve Bounds "
                     <<  endl ;
@@ -1497,7 +1497,7 @@ void ProcessProjectCAD::Diagnostics()
         EdgeSet NoCADEdges;
         for (auto element : m_mesh->m_element[2])
         {
-            if (element->m_parentCAD == NULL)
+            if (element->m_parentCAD == nullptr)
             {
                 counterElementsNoCAD++;
                 // m_log(VERBOSE) << "Element No CAD Vertex1= " <<
@@ -1511,7 +1511,7 @@ void ProcessProjectCAD::Diagnostics()
         int cntEdgeCurve = 0, cntEdgeSurf = 0;
         for (auto edge : surfEdges)
         {
-            if (edge->m_parentCAD == NULL)
+            if (edge->m_parentCAD == nullptr)
             {
                 counterEdgesNoCAD++;
             }
@@ -1551,7 +1551,7 @@ void ProcessProjectCAD::Diagnostics()
                 cntCAD3orMore++;
             }
 
-            if (vertex->GetCADVertex() != NULL)
+            if (vertex->GetCADVertex() != nullptr)
             {
                 cntCADVertices++;
             }
@@ -1649,7 +1649,7 @@ void ProcessProjectCAD::LinkFaceToCAD(NekDouble tolv1)
             element->m_parentCAD = m_mesh->m_cad->GetSurf(commonCAD[0]);
             for (auto edge : edges)
             {
-                if (edge->m_parentCAD == NULL)
+                if (edge->m_parentCAD == nullptr)
                 {
                     edge->m_parentCAD = m_mesh->m_cad->GetSurf(commonCAD[0]);
                 }

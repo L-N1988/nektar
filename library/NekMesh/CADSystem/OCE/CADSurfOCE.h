@@ -78,7 +78,7 @@ public:
     bool IsPlanar() override;
     std::array<NekDouble, 2> locuv(std::array<NekDouble, 3> p, NekDouble &dist,
                                    NekDouble Umin, NekDouble Usup,
-                                   NekDouble Vmin, NekDouble Vsup);
+                                   NekDouble Vmin, NekDouble Vsup) override;
 
 private:
     /// Function which tests the the value of uv used is within the surface
