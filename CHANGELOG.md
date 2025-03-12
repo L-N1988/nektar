@@ -31,6 +31,7 @@ v5.8.0
 
 **NekMesh**
 - Add high-order pyramid and prism support from gmsh (!1956)
+- Industrial Pipeline Mesh Curving and CAD-Mesh link Reconstruction for all type of elements (!2057)
 
 **Python**
 - Transition bindings to use pybind11 (!1950)
