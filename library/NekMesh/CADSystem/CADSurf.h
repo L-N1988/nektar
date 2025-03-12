@@ -204,9 +204,11 @@ public:
     NEKMESH_EXPORT virtual std::array<NekDouble, 6> BoundingBox() = 0;
 
     /**
-     * @brief Returns the bounding box of the surface that scales the enlargement and the meshing parameters * scale
+     * @brief Returns the bounding box of the surface that scales the
+     * enlargement and the meshing parameters * scale
      */
-    NEKMESH_EXPORT virtual std::array<NekDouble, 6> BoundingBox(NekDouble scale) = 0;
+    NEKMESH_EXPORT virtual std::array<NekDouble, 6> BoundingBox(
+        NekDouble scale) = 0;
 
     /**
      * @brief returns curvature at point uv
