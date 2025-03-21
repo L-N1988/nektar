@@ -145,19 +145,10 @@ void FilterError::v_Update(
 
         NekDouble vL2Error   = equationSys->L2Error(i, exactsoln);
         NekDouble vLinfError = equationSys->LinfError(i, exactsoln);
-        // Only evaluate H1 for non homogeneous case
-        if (!m_isHomogeneous1D)
-        {
-            NekDouble vH1Error = equationSys->H1Error(i, exactsoln);
-        }
 
         if (m_comm->GetRank() == 0)
         {
             m_outFile << " " << vL2Error << " " << vLinfError;
-            if (!m_isHomogeneous1D)
-            {
-                m_outFile << " " << vH1Error;
-            }
 
             if (m_consoleOutput)
             {
@@ -167,8 +158,18 @@ void FilterError::v_Update(
                 std::cout << "L inf error (variable "
                           << equationSys->GetVariable(i) << ") : " << vLinfError
                           << std::endl;
+            }
+        }
 
-                if (!m_isHomogeneous1D)
+        // Only evaluate H1 for non homogeneous case
+        if (!m_isHomogeneous1D)
+        {
+            NekDouble vH1Error = equationSys->H1Error(i, exactsoln);
+            if (m_comm->GetRank() == 0)
+            {
+                m_outFile << " " << vH1Error;
+
+                if (m_consoleOutput)
                 {
                     std::cout << "H 1 error (variable "
                               << equationSys->GetVariable(i)
