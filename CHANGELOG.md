@@ -42,6 +42,9 @@ v5.8.0
 
 **PulseWaveSolver**
 - Added ability to output history points (and other filters) (!2000)
+
+**Miscellaneous**
+- Deprecate use of TimeIntegrationMethod in SolverInfo (!2059)
 	
 v5.7.0
 -----
