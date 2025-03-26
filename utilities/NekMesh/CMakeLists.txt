@@ -133,6 +133,14 @@ ENDIF()
 ADD_NEKTAR_TEST(StarTec/peralign_bl_cube)
 ADD_NEKTAR_TEST(StarTec/spherigon_bl_straight_rw LENGTHY)
 
+# IndustrialPipeline tests
+ADD_NEKTAR_TEST(IndustrialPipeline/00_projectcad_shaft)
+ADD_NEKTAR_TEST(IndustrialPipeline/01_projectcad_shaftHO)
+ADD_NEKTAR_TEST(IndustrialPipeline/02_projectcad_3d_sphere_star)
+ADD_NEKTAR_TEST(IndustrialPipeline/03_projectcad_NACA0012)
+
+
+
 # Nek5000 tests
 ADD_NEKTAR_TEST(Nek5000/annulus)
 ADD_NEKTAR_TEST(Nek5000/box)
