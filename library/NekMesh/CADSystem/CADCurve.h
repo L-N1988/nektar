@@ -147,7 +147,7 @@ public:
         m_adjSurfs.push_back(i);
     }
 
-    /*
+    /**
      * @brief returns the ids of surfaces bound by this curve as well as their
      *        Orientation with respect to the loop of curves
      */
@@ -157,7 +157,7 @@ public:
         return m_adjSurfs;
     }
 
-    /*
+    /**
      * @brief returns lenght of the curve
      */
     NekDouble GetTotLength()
@@ -165,7 +165,7 @@ public:
         return m_length;
     }
 
-    /*
+    /**
      * @brief assign ids of end vertices in main cad
      */
     void SetVert(std::vector<CADVertSharedPtr> &falVert)
@@ -173,7 +173,7 @@ public:
         m_mainVerts = falVert;
     }
 
-    /*
+    /**
      * @brief get the vertices that are the ends of the curve,
      * which are in the main cad list
      */
@@ -182,14 +182,14 @@ public:
         return m_mainVerts;
     }
 
-    /*
+    /**
      * @brief locates a point in the parametric space. returns the
      * distance to the point and passes t by reference and updates it
      */
     NEKMESH_EXPORT virtual NekDouble loct(std::array<NekDouble, 3> xyz,
                                           NekDouble &t) = 0;
 
-    /*
+    /**
      * @brief locates a point in the parametric space. returns the
      * distance to the point and passes t by reference and updates it
      * This is in the parametric bounds of the Curve and is important for

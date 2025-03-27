@@ -439,7 +439,7 @@ public:
     /// list of cadsurfs the node lies on
     std::map<int, std::pair<std::weak_ptr<CADSurf>, std::array<NekDouble, 2>>>
         m_CADSurfList;
-    // CAD Vertex the node lies on
+    /// CAD Vertex the node lies on
     std::weak_ptr<CADVert> m_CADVer;
 
 private:
