@@ -91,16 +91,16 @@ private:
     ~VanDerWaalsEoS(void) override = default;
 
     template <class T, typename = typename std::enable_if<
-                           std::is_floating_point<T>::value ||
-                           tinysimd::is_vector_floating_point<T>::value>::type>
+                           std::is_floating_point_v<T> ||
+                           tinysimd::is_vector_floating_point_v<T>>::type>
     inline T GetTemperatureKernel(const T &rho, const T &e)
     {
         return (e + m_a * rho) * (m_gamma - 1) / m_gasConstant;
     }
 
     template <class T, typename = typename std::enable_if<
-                           std::is_floating_point<T>::value ||
-                           tinysimd::is_vector_floating_point<T>::value>::type>
+                           std::is_floating_point_v<T> ||
+                           tinysimd::is_vector_floating_point_v<T>>::type>
     inline T GetPressureKernel(const T &rho, const T &e)
     {
         return (e + m_a * rho) * (m_gamma - 1) / (1.0 / rho - m_b) -
