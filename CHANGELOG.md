@@ -21,6 +21,7 @@ v5.8.0
 - Fixed Modified Arnoldi driver to remove discontinuities from random vectors (!2002)
 - Addedd support for backing up filters output when the file name have already existis (!2006)
 - Partially revert Geometry::v_ContainsPoint (!2007)
+- Delete redundant lines in the Navier-Stokes diffusion functions (!2058)
 
 **CI**
 - Fix CubeAllElements performance test tolerance (!1943)

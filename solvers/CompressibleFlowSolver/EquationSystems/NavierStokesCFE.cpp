@@ -220,10 +220,6 @@ void NavierStokesCFE::v_DoDiffusion(
             inBwd[i]       = Array<OneD, NekDouble>{nTracePts};
         }
 
-        // Extract pressure
-        // (use inarrayDiff[0] as a temporary storage for the pressure)
-        m_varConv->GetPressure(inarray, inarrayDiff[0]);
-
         // Extract temperature
         m_varConv->GetTemperature(inarray, inarrayDiff[nvariables - 2]);
 
@@ -239,9 +235,6 @@ void NavierStokesCFE::v_DoDiffusion(
         }
         else
         {
-            m_varConv->GetPressure(pFwd, inFwd[0]);
-            m_varConv->GetPressure(pBwd, inBwd[0]);
-
             m_varConv->GetTemperature(pFwd, inFwd[nvariables - 2]);
             m_varConv->GetTemperature(pBwd, inBwd[nvariables - 2]);
 
