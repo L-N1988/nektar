@@ -171,8 +171,8 @@ protected:
                           std::vector<std::string> &variables) override;
 
     template <class T, typename = typename std::enable_if<
-                           std::is_floating_point<T>::value ||
-                           tinysimd::is_vector_floating_point<T>::value>::type>
+                           std::is_floating_point_v<T> ||
+                           tinysimd::is_vector_floating_point_v<T>>::type>
     inline void GetViscosityAndThermalCondFromTempKernel(const T &temperature,
                                                          T &mu, T &thermalCond)
     {
@@ -182,8 +182,8 @@ protected:
     }
 
     template <class T, typename = typename std::enable_if<
-                           std::is_floating_point<T>::value ||
-                           tinysimd::is_vector_floating_point<T>::value>::type>
+                           std::is_floating_point_v<T> ||
+                           tinysimd::is_vector_floating_point_v<T>>::type>
     inline void GetViscosityFromTempKernel(const T &temperature, T &mu)
     {
         // Variable viscosity through the Sutherland's law
@@ -206,8 +206,8 @@ protected:
      * outarray[nvars] flux
      */
     template <class T, typename = typename std::enable_if<
-                           std::is_floating_point<T>::value ||
-                           tinysimd::is_vector_floating_point<T>::value>::type>
+                           std::is_floating_point_v<T> ||
+                           tinysimd::is_vector_floating_point_v<T>>::type>
     inline void GetViscousFluxBilinearFormKernel(
         const unsigned short nDim, const unsigned short FluxDirection,
         const unsigned short DerivDirection,
