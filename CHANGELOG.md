@@ -24,6 +24,7 @@ v5.8.0
 - Make the CWIPI third-party patch work with IntelLLVM (!2053)
 - Use C++17 value template for traits (!2081)
 - Add H1-norm to Error filter (!1834)
+- Delete redundant lines in the Navier-Stokes diffusion functions (!2058)
 
 **CI**
 - Fix CubeAllElements performance test tolerance (!1943)
