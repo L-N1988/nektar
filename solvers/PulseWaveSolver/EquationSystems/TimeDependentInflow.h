@@ -67,12 +67,12 @@ public:
     /// Name of class
     static std::string className;
 
-    ~TimeDependentInflow() override = default;
-
 protected:
     TimeDependentInflow(Array<OneD, MultiRegions::ExpListSharedPtr> pVessel,
                         const LibUtilities::SessionReaderSharedPtr pSession,
                         PulseWavePressureAreaSharedPtr pressureArea);
+
+    ~TimeDependentInflow() override = default;
 
     void v_DoBoundary(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
                       Array<OneD, Array<OneD, NekDouble>> &A_0,

@@ -76,14 +76,14 @@ public:
     /// Name of class
     static std::string className;
 
-    ~WeakPressureExtrapolate() override = default;
-
 protected:
     WeakPressureExtrapolate(const LibUtilities::SessionReaderSharedPtr pSession,
                             Array<OneD, MultiRegions::ExpListSharedPtr> pFields,
                             MultiRegions::ExpListSharedPtr pPressure,
                             const Array<OneD, int> pVel,
                             const SolverUtils::AdvectionSharedPtr advObject);
+
+    ~WeakPressureExtrapolate() override = default;
 
     void v_EvaluatePressureBCs(
         const Array<OneD, const Array<OneD, NekDouble>> &fields,

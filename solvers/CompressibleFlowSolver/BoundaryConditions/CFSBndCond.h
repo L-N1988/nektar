@@ -71,8 +71,6 @@ CFSBndCondFactory &GetCFSBndCondFactory();
 class CFSBndCond
 {
 public:
-    virtual ~CFSBndCond() = default;
-
     /// Apply the boundary condition
     void Apply(Array<OneD, Array<OneD, NekDouble>> &Fwd,
                Array<OneD, Array<OneD, NekDouble>> &physarray,
@@ -122,6 +120,8 @@ protected:
                const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
                const Array<OneD, Array<OneD, NekDouble>> &pGridVelocity,
                const int pSpaceDim, const int bcRegion, const int cnt);
+
+    virtual ~CFSBndCond() = default;
 
     virtual void v_Apply(Array<OneD, Array<OneD, NekDouble>> &Fwd,
                          Array<OneD, Array<OneD, NekDouble>> &physarray,

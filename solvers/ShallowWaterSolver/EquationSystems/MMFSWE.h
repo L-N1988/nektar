@@ -75,12 +75,9 @@ public:
     /// Name of class
     static std::string className;
 
+protected:
     TestType m_TestType;
 
-    /// Destructor
-    ~MMFSWE() override = default;
-
-protected:
     /// Still water depth
     Array<OneD, NekDouble> m_depth;
     Array<OneD, Array<OneD, NekDouble>> m_Derivdepth;
@@ -111,9 +108,10 @@ protected:
     //        with 3DHomogenoeus1D expansion)
     int m_planeNumber;
 
-    /// Session reader
     MMFSWE(const LibUtilities::SessionReaderSharedPtr &pSession,
            const SpatialDomains::MeshGraphSharedPtr &pGraph);
+
+    ~MMFSWE() override = default;
 
     /// Compute the RHS
     void DoOdeRhs(const Array<OneD, const Array<OneD, NekDouble>> &inarray,

@@ -62,17 +62,7 @@ public:
     /// Name of class
     static std::string className;
 
-    // Destructor
-    ~SmoothedProfileMethod() override = default;
-
-    void v_InitObject(bool DeclareField = true) override;
-
-    void v_GenerateSummary(SolverUtils::SummaryList &s) override;
-
 protected:
-    SmoothedProfileMethod(const LibUtilities::SessionReaderSharedPtr &pSession,
-                          const SpatialDomains::MeshGraphSharedPtr &pGraph);
-
     /// Correction pressure field for SPM
     MultiRegions::ExpListSharedPtr m_pressureP;
     /// Velocity of the immersed body(ies)
@@ -98,6 +88,15 @@ protected:
     int m_forcesFilter;
 
     static std::string solverTypeLookupId;
+
+    SmoothedProfileMethod(const LibUtilities::SessionReaderSharedPtr &pSession,
+                          const SpatialDomains::MeshGraphSharedPtr &pGraph);
+
+    ~SmoothedProfileMethod() override = default;
+
+    void v_InitObject(bool DeclareField = true) override;
+
+    void v_GenerateSummary(SolverUtils::SummaryList &s) override;
 
     // Interface for 'v_SolveUnsteadyStokesSystem'
     void v_SolveUnsteadyStokesSystem(

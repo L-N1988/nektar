@@ -25,6 +25,7 @@ v5.8.0
 - Use C++17 value template for traits (!2081)
 - Add H1-norm to Error filter (!1834)
 - Delete redundant lines in the Navier-Stokes diffusion functions (!2058)
+- Various tidy-up for solvers (!2056)
 
 **CI**
 - Fix CubeAllElements performance test tolerance (!1943)
@@ -41,7 +42,6 @@ v5.8.0
 - Transition bindings to use pybind11 (!1950)
 
 **Documentation**
-- Updated the User-guide with additional inofrmation for outflow BC, addressing the issue #103 (!1988)
 - Updated the User-guide with additional inofrmation for outflow BC, addressing the issue #103 (!1990)
 
 **PulseWaveSolver**

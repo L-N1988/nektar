@@ -58,12 +58,12 @@ public:
     /// Name of class
     static std::string className;
 
-    ~VCSWeakPressure() override = default;
-
 protected:
     /// Constructor.
     VCSWeakPressure(const LibUtilities::SessionReaderSharedPtr &pSession,
                     const SpatialDomains::MeshGraphSharedPtr &pGraph);
+
+    ~VCSWeakPressure() override = default;
 
     // Virtual functions
     void v_GenerateSummary(SolverUtils::SummaryList &s) override;

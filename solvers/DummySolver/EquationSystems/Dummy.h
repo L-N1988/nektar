@@ -64,16 +64,14 @@ public:
     /// Name of class
     static std::string className;
 
-    /// Destructor
-    ~Dummy() override = default;
-
 protected:
     SolverUtils::CouplingSharedPtr m_coupling;
     std::vector<SolverUtils::ForcingSharedPtr> m_forcing;
 
-    /// Initialises UnsteadySystem class members.
     Dummy(const LibUtilities::SessionReaderSharedPtr &pSession,
           const SpatialDomains::MeshGraphSharedPtr &pGraph);
+
+    ~Dummy() override = default;
 
     void v_InitObject(bool DeclareFields = true) override;
 

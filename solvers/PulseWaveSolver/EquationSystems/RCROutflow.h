@@ -67,12 +67,15 @@ public:
     // Name of class
     static std::string className;
 
-    ~RCROutflow() override = default;
-
 protected:
+    NekDouble m_timestep;
+    NekDouble m_pc = 0.0;
+
     RCROutflow(Array<OneD, MultiRegions::ExpListSharedPtr> pVessel,
                const LibUtilities::SessionReaderSharedPtr pSession,
                PulseWavePressureAreaSharedPtr pressureArea);
+
+    ~RCROutflow() override = default;
 
     void v_DoBoundary(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
                       Array<OneD, Array<OneD, NekDouble>> &A_0,
@@ -84,9 +87,6 @@ protected:
     void R_RiemannSolver(NekDouble R, NekDouble A_l, NekDouble u_l,
                          NekDouble A_0, NekDouble beta, NekDouble alpha,
                          NekDouble POut, NekDouble &A_u, NekDouble &u_u);
-
-    NekDouble m_timestep;
-    NekDouble m_pc = 0.0;
 
 private:
 };

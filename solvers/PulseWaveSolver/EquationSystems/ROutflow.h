@@ -67,12 +67,12 @@ public:
     // Name of class
     static std::string className;
 
-    ~ROutflow() override = default;
-
 protected:
     ROutflow(Array<OneD, MultiRegions::ExpListSharedPtr> pVessel,
              const LibUtilities::SessionReaderSharedPtr pSession,
              PulseWavePressureAreaSharedPtr pressureArea);
+
+    ~ROutflow() override = default;
 
     void v_DoBoundary(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
                       Array<OneD, Array<OneD, NekDouble>> &A_0,

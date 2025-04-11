@@ -46,6 +46,7 @@ namespace Nektar
 std::string FilterMovingBody::className =
     SolverUtils::GetFilterFactory().RegisterCreatorFunction(
         "MovingBody", FilterMovingBody::create, "Moving Body Filter");
+
 /**
  *
  */

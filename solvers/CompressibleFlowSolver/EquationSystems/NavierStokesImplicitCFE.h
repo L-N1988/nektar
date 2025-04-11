@@ -68,8 +68,6 @@ public:
     // Name of class
     static std::string className;
 
-    ~NavierStokesImplicitCFE() override = default;
-
     typedef std::function<void(
         const Array<OneD, NekDouble> &, const NekDouble &,
         const Array<OneD, NekDouble> &, DNekMatSharedPtr &)>
@@ -81,6 +79,8 @@ protected:
     NavierStokesImplicitCFE(
         const LibUtilities::SessionReaderSharedPtr &pSession,
         const SpatialDomains::MeshGraphSharedPtr &pGraph);
+
+    ~NavierStokesImplicitCFE() override = default;
 
     void v_InitObject(bool DeclareFields = true) override;
 

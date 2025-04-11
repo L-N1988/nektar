@@ -124,6 +124,12 @@ public:
     }
 
 protected:
+    Array<OneD, MultiRegions::ExpListSharedPtr> m_vessels;
+    LibUtilities::SessionReaderSharedPtr m_session;
+
+    NekDouble m_PExt;
+    NekDouble m_rho;
+
     virtual void v_GetPressure(NekDouble &P, const NekDouble &beta,
                                const NekDouble &A, const NekDouble &A0,
                                const NekDouble &dAUdx,
@@ -160,12 +166,6 @@ protected:
                                       const Array<OneD, NekDouble> &A0,
                                       const Array<OneD, NekDouble> &alpha,
                                       const std::string &type) = 0;
-
-    Array<OneD, MultiRegions::ExpListSharedPtr> m_vessels;
-    LibUtilities::SessionReaderSharedPtr m_session;
-
-    NekDouble m_PExt;
-    NekDouble m_rho;
 
 private:
 };

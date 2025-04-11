@@ -66,19 +66,6 @@ public:
 
     static std::string className;
 
-    ~FilterMovingBody() override = default;
-
-    void v_Initialise(
-        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time) override;
-
-    void v_Update(
-        [[maybe_unused]] const Array<OneD, const MultiRegions::ExpListSharedPtr>
-            &pFields,
-        [[maybe_unused]] const NekDouble &time) override
-    {
-    }
-
     void UpdateForce(
         const LibUtilities::SessionReaderSharedPtr &pSession,
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
@@ -89,18 +76,7 @@ public:
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
         Array<OneD, NekDouble> &MotionVars, const NekDouble &time);
 
-    void v_Finalise(
-        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time) override;
-
-    bool v_IsTimeDependent() override;
-
 private:
-    FilterMovingBody(
-        const LibUtilities::SessionReaderSharedPtr &pSession,
-        const std::shared_ptr<SolverUtils::EquationSystem> &pEquation,
-        const ParamMap &pParams);
-
     /// ID's of boundary regions where we want the forces
     std::vector<unsigned int> m_boundaryRegionsIdList;
     /// Determines if a given Boundary Region is in
@@ -120,6 +96,30 @@ private:
     Array<OneD, std::ofstream> m_outputStream;
     std::string m_outputFile_fce;
     std::string m_outputFile_mot;
+
+    FilterMovingBody(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const std::shared_ptr<SolverUtils::EquationSystem> &pEquation,
+        const ParamMap &pParams);
+
+    ~FilterMovingBody() override = default;
+
+    void v_Initialise(
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        const NekDouble &time) override;
+
+    void v_Update(
+        [[maybe_unused]] const Array<OneD, const MultiRegions::ExpListSharedPtr>
+            &pFields,
+        [[maybe_unused]] const NekDouble &time) override
+    {
+    }
+
+    void v_Finalise(
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        const NekDouble &time) override;
+
+    bool v_IsTimeDependent() override;
 };
 
 } // namespace Nektar

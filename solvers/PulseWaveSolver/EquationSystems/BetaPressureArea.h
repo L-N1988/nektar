@@ -62,11 +62,11 @@ public:
 
     static std::string className;
 
-    ~BetaPressureArea() override = default;
-
 protected:
     BetaPressureArea(Array<OneD, MultiRegions::ExpListSharedPtr> pVessel,
                      const LibUtilities::SessionReaderSharedPtr pSession);
+
+    ~BetaPressureArea() override = default;
 
     void v_GetPressure(NekDouble &P, const NekDouble &beta, const NekDouble &A,
                        const NekDouble &A0, const NekDouble &dAUdx,

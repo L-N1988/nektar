@@ -580,32 +580,6 @@ void AcousticSystem::v_ExtraFldOutput(
     }
 }
 
-/**
- * @brief Get the normal vectors.
- */
-const Array<OneD, const Array<OneD, NekDouble>> &AcousticSystem::GetNormals()
-{
-    return m_traceNormals;
-}
-
-/**
- * @brief Get the locations of the components of the directed fields within the
- * fields array.
- */
-const Array<OneD, const Array<OneD, NekDouble>> &AcousticSystem::GetVecLocs()
-{
-    return m_vecLocs;
-}
-
-/**
- * @brief Get the baseflow field.
- */
-const Array<OneD, const Array<OneD, NekDouble>> &AcousticSystem::
-    GetBasefieldFwdBwd()
-{
-    return m_bfFwdBwd;
-}
-
 void AcousticSystem::UpdateBasefieldFwdBwd()
 {
     for (int i = 0; i < m_bfNames.size(); i++)

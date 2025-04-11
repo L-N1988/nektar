@@ -60,13 +60,18 @@ public:
     /// Name of the class
     static std::string className;
 
-    ~FilterReynoldsStresses() override = default;
-
 protected:
+    std::vector<Array<OneD, NekDouble>> m_fields;
+    std::vector<Array<OneD, NekDouble>> m_delta;
+    NekDouble m_alpha;
+    bool m_movAvg;
+
     FilterReynoldsStresses(
         const LibUtilities::SessionReaderSharedPtr &pSession,
         const std::shared_ptr<SolverUtils::EquationSystem> &pEquation,
         const std::map<std::string, std::string> &pParams);
+
+    ~FilterReynoldsStresses() override = default;
 
     void v_Initialise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
@@ -86,11 +91,6 @@ protected:
     {
         return "_stress";
     }
-
-    std::vector<Array<OneD, NekDouble>> m_fields;
-    std::vector<Array<OneD, NekDouble>> m_delta;
-    NekDouble m_alpha;
-    bool m_movAvg;
 };
 
 } // namespace Nektar::SolverUtils

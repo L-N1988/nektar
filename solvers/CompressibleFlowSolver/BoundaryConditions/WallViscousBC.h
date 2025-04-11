@@ -48,8 +48,6 @@ class WallViscousBC : public CFSBndCond
 public:
     friend class MemoryManager<WallViscousBC>;
 
-    ~WallViscousBC(void) override = default;
-
     /// Creates an instance of this class
     static CFSBndCondSharedPtr create(
         const LibUtilities::SessionReaderSharedPtr &pSession,
@@ -83,6 +81,8 @@ private:
                   const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
                   const Array<OneD, Array<OneD, NekDouble>> &pGridVelocity,
                   const int pSpaceDim, const int bcRegion, const int cnt);
+
+    ~WallViscousBC(void) override = default;
 };
 
 } // namespace Nektar

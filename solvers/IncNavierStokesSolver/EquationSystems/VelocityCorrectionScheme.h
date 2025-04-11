@@ -59,10 +59,6 @@ public:
     /// Name of class
     static std::string className;
 
-    ~VelocityCorrectionScheme() override = default;
-
-    void v_InitObject(bool DeclareField = true) override;
-
     void SetUpPressureForcing(
         const Array<OneD, const Array<OneD, NekDouble>> &fields,
         Array<OneD, Array<OneD, NekDouble>> &Forcing, const NekDouble aii_Dt)
@@ -106,11 +102,6 @@ public:
     }
 
 protected:
-    /// Constructor.
-    VelocityCorrectionScheme(
-        const LibUtilities::SessionReaderSharedPtr &pSession,
-        const SpatialDomains::MeshGraphSharedPtr &pGraph);
-
     /// bool to identify if spectral vanishing viscosity is active.
     bool m_useHomo1DSpecVanVisc;
     /// bool to identify if spectral vanishing viscosity is active.
@@ -165,7 +156,17 @@ protected:
     /// Value of aii_dt used to compute Stokes flowrate solution.
     NekDouble m_flowrateAiidt;
 
+    Array<OneD, Array<OneD, NekDouble>> m_F;
+
     static std::string solverTypeLookupId;
+
+    VelocityCorrectionScheme(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph);
+
+    ~VelocityCorrectionScheme() override = default;
+
+    void v_InitObject(bool DeclareField = true) override;
 
     void SetupFlowrate(NekDouble aii_dt);
     NekDouble MeasureFlowrate(
@@ -224,8 +225,6 @@ protected:
     {
         return instr;
     }
-
-    Array<OneD, Array<OneD, NekDouble>> m_F;
 
     void SetUpSVV(void);
     void SetUpExtrapolation(void);

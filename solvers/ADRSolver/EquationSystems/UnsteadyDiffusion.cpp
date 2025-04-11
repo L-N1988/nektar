@@ -126,18 +126,6 @@ void UnsteadyDiffusion::v_InitObject(bool DeclareFields)
     m_ode.DefineImplicitSolve(&UnsteadyDiffusion::DoImplicitSolve, this);
 }
 
-void UnsteadyDiffusion::v_GenerateSummary(SummaryList &s)
-{
-    UnsteadySystem::v_GenerateSummary(s);
-    if (m_useSpecVanVisc)
-    {
-        std::stringstream ss;
-        ss << "SVV (cut off = " << m_sVVCutoffRatio
-           << ", coeff = " << m_sVVDiffCoeff << ")";
-        AddSummaryItem(s, "Smoothing", ss.str());
-    }
-}
-
 /* @brief Compute the right-hand side for the unsteady diffusion problem.
  *
  * @param inarray    Given fields.
@@ -270,4 +258,17 @@ void UnsteadyDiffusion::GetFluxVector(
         }
     }
 }
+
+void UnsteadyDiffusion::v_GenerateSummary(SummaryList &s)
+{
+    UnsteadySystem::v_GenerateSummary(s);
+    if (m_useSpecVanVisc)
+    {
+        std::stringstream ss;
+        ss << "SVV (cut off = " << m_sVVCutoffRatio
+           << ", coeff = " << m_sVVDiffCoeff << ")";
+        AddSummaryItem(s, "Smoothing", ss.str());
+    }
+}
+
 } // namespace Nektar

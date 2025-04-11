@@ -39,6 +39,7 @@
 
 namespace Nektar
 {
+
 std::string APE::className = GetEquationSystemFactory().RegisterCreatorFunction(
     "APE", APE::create, "APE1/APE4 (Acoustic Perturbation Equations)");
 

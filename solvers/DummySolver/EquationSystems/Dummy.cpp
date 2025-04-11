@@ -91,6 +91,44 @@ void Dummy::v_InitObject(bool DeclareFields)
 }
 
 /**
+ * @brief Compute the right-hand side.
+ */
+void Dummy::DoOdeRhs(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+                     Array<OneD, Array<OneD, NekDouble>> &outarray,
+                     [[maybe_unused]] const NekDouble time)
+{
+    int nVariables = inarray.size();
+    int nq         = GetTotPoints();
+
+    for (int i = 0; i < nVariables; ++i)
+    {
+        Vmath::Zero(nq, outarray[i], 1);
+    }
+}
+
+/**
+ * @brief Compute the projection and call the method for imposing the
+ * boundary conditions in case of discontinuous projection.
+ */
+void Dummy::DoOdeProjection(
+    const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &outarray,
+    [[maybe_unused]] const NekDouble time)
+{
+    int nvariables = inarray.size();
+    int nq         = m_fields[0]->GetNpoints();
+
+    // deep copy
+    if (inarray != outarray)
+    {
+        for (int i = 0; i < nvariables; ++i)
+        {
+            Vmath::Vcopy(nq, inarray[i], 1, outarray[i], 1);
+        }
+    }
+}
+
+/**
  * @brief v_PreIntegrate
  */
 bool Dummy::v_PreIntegrate(int step)
@@ -216,44 +254,6 @@ void Dummy::v_Output()
             }
         }
         f++;
-    }
-}
-
-/**
- * @brief Compute the right-hand side.
- */
-void Dummy::DoOdeRhs(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-                     Array<OneD, Array<OneD, NekDouble>> &outarray,
-                     [[maybe_unused]] const NekDouble time)
-{
-    int nVariables = inarray.size();
-    int nq         = GetTotPoints();
-
-    for (int i = 0; i < nVariables; ++i)
-    {
-        Vmath::Zero(nq, outarray[i], 1);
-    }
-}
-
-/**
- * @brief Compute the projection and call the method for imposing the
- * boundary conditions in case of discontinuous projection.
- */
-void Dummy::DoOdeProjection(
-    const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-    Array<OneD, Array<OneD, NekDouble>> &outarray,
-    [[maybe_unused]] const NekDouble time)
-{
-    int nvariables = inarray.size();
-    int nq         = m_fields[0]->GetNpoints();
-
-    // deep copy
-    if (inarray != outarray)
-    {
-        for (int i = 0; i < nvariables; ++i)
-        {
-            Vmath::Vcopy(nq, inarray[i], 1, outarray[i], 1);
-        }
     }
 }
 
