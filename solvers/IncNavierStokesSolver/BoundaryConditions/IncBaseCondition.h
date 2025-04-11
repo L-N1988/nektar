@@ -67,17 +67,17 @@ class IncBaseCondition
 public:
     virtual ~IncBaseCondition() = default;
 
+    void Initialise(const LibUtilities::SessionReaderSharedPtr &pSession)
+    {
+        v_Initialise(pSession);
+    }
+
     void Update(const Array<OneD, const Array<OneD, NekDouble>> &fields,
                 const Array<OneD, const Array<OneD, NekDouble>> &Adv,
                 std::map<std::string, NekDouble> &params)
     {
         v_Update(fields, Adv, params);
     };
-
-    void Initialise(const LibUtilities::SessionReaderSharedPtr &pSession)
-    {
-        v_Initialise(pSession);
-    }
 
 protected:
     IncBaseCondition(const LibUtilities::SessionReaderSharedPtr pSession,
@@ -90,9 +90,12 @@ protected:
         const LibUtilities::SessionReaderSharedPtr &pSession);
 
     virtual void v_Update(
-        const Array<OneD, const Array<OneD, NekDouble>> &fields,
-        const Array<OneD, const Array<OneD, NekDouble>> &Adv,
-        std::map<std::string, NekDouble> &params);
+        [[maybe_unused]] const Array<OneD, const Array<OneD, NekDouble>>
+            &fields,
+        [[maybe_unused]] const Array<OneD, const Array<OneD, NekDouble>> &Adv,
+        [[maybe_unused]] std::map<std::string, NekDouble> &params)
+    {
+    }
 
     void ExtrapolateArray(
         const int numCalls,

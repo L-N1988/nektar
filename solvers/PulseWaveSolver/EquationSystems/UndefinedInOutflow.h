@@ -67,12 +67,12 @@ public:
     /// Name of class
     static std::string className;
 
-    ~UndefinedInOutflow() override = default;
-
 protected:
     UndefinedInOutflow(Array<OneD, MultiRegions::ExpListSharedPtr> pVessel,
                        const LibUtilities::SessionReaderSharedPtr pSession,
                        PulseWavePressureAreaSharedPtr pressureArea);
+
+    ~UndefinedInOutflow() override = default;
 
     void v_DoBoundary(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
                       Array<OneD, Array<OneD, NekDouble>> &A_0,

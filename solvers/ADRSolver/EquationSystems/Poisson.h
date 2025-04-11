@@ -59,17 +59,16 @@ public:
     /// Name of class
     static std::string className;
 
-    ~Poisson() override = default;
-
 protected:
     Poisson(const LibUtilities::SessionReaderSharedPtr &pSession,
             const SpatialDomains::MeshGraphSharedPtr &pGraph);
+
+    ~Poisson() override = default;
 
     void v_InitObject(bool DeclareFields = true) override;
 
     void v_GenerateSummary(SolverUtils::SummaryList &s) override;
 
-private:
     Array<OneD, bool> v_GetSystemSingularChecks() override;
 };
 

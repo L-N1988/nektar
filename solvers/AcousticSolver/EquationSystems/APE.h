@@ -62,15 +62,20 @@ public:
     /// Name of class
     static std::string className;
 
-    /// Destructor
-    ~APE() override = default;
-
 protected:
-    /// Initialises UnsteadySystem class members.
     APE(const LibUtilities::SessionReaderSharedPtr &pSession,
         const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
+    ~APE() override = default;
+
     void v_InitObject(bool DeclareFields = true) override;
+
+    void v_AddLinTerm(
+        [[maybe_unused]] const Array<OneD, const Array<OneD, NekDouble>>
+            &inarray,
+        [[maybe_unused]] Array<OneD, Array<OneD, NekDouble>> &outarray) override
+    {
+    }
 
     void v_GetFluxVector(
         const Array<OneD, Array<OneD, NekDouble>> &physfield,
@@ -81,6 +86,7 @@ protected:
         Array<OneD, Array<OneD, NekDouble>> &BfFwd,
         Array<OneD, Array<OneD, NekDouble>> &physarray) override;
 };
+
 } // namespace Nektar
 
 #endif

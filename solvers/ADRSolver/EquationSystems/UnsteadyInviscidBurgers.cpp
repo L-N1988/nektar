@@ -125,39 +125,6 @@ void UnsteadyInviscidBurgers::v_InitObject(bool DeclareFields)
 }
 
 /**
- * @brief Get the normal velocity for the inviscid Burgers equation.
- */
-Array<OneD, NekDouble> &UnsteadyInviscidBurgers::GetNormalVelocity()
-{
-    // Number of trace (interface) points
-    int nTracePts = GetTraceNpoints();
-
-    // Number of solution points
-    int nSolutionPts = GetNpoints();
-
-    // Auxiliary variables to compute the normal velocity
-    Array<OneD, NekDouble> Fwd(nTracePts);
-    Array<OneD, NekDouble> Bwd(nTracePts);
-    Array<OneD, NekDouble> physfield(nSolutionPts);
-
-    // Reset the normal velocity
-    Vmath::Zero(nTracePts, m_traceVn, 1);
-
-    for (int i = 0; i < m_spacedim; ++i)
-    {
-        m_fields[i]->BwdTrans(m_fields[i]->GetCoeffs(), physfield);
-        m_fields[i]->GetFwdBwdTracePhys(physfield, Fwd, Bwd, true);
-        Vmath::Vadd(nTracePts, Fwd, 1, Bwd, 1, Fwd, 1);
-        Vmath::Smul(nTracePts, 0.5, Fwd, 1, Fwd, 1);
-        Vmath::Vvtvp(nTracePts, m_traceNormals[i], 1, Fwd, 1, m_traceVn, 1,
-                     m_traceVn, 1);
-    }
-    Vmath::Smul(nTracePts, 0.5, m_traceVn, 1, m_traceVn, 1);
-
-    return m_traceVn;
-}
-
-/**
  * @brief Compute the right-hand side for the inviscid Burgers equation.
  *
  * @param inarray    Given fields.
@@ -249,6 +216,39 @@ void UnsteadyInviscidBurgers::DoOdeProjection(
             break;
         }
     }
+}
+
+/**
+ * @brief Get the normal velocity for the inviscid Burgers equation.
+ */
+Array<OneD, NekDouble> &UnsteadyInviscidBurgers::GetNormalVelocity()
+{
+    // Number of trace (interface) points
+    int nTracePts = GetTraceNpoints();
+
+    // Number of solution points
+    int nSolutionPts = GetNpoints();
+
+    // Auxiliary variables to compute the normal velocity
+    Array<OneD, NekDouble> Fwd(nTracePts);
+    Array<OneD, NekDouble> Bwd(nTracePts);
+    Array<OneD, NekDouble> physfield(nSolutionPts);
+
+    // Reset the normal velocity
+    Vmath::Zero(nTracePts, m_traceVn, 1);
+
+    for (int i = 0; i < m_spacedim; ++i)
+    {
+        m_fields[i]->BwdTrans(m_fields[i]->GetCoeffs(), physfield);
+        m_fields[i]->GetFwdBwdTracePhys(physfield, Fwd, Bwd, true);
+        Vmath::Vadd(nTracePts, Fwd, 1, Bwd, 1, Fwd, 1);
+        Vmath::Smul(nTracePts, 0.5, Fwd, 1, Fwd, 1);
+        Vmath::Vvtvp(nTracePts, m_traceNormals[i], 1, Fwd, 1, m_traceVn, 1,
+                     m_traceVn, 1);
+    }
+    Vmath::Smul(nTracePts, 0.5, m_traceVn, 1, m_traceVn, 1);
+
+    return m_traceVn;
 }
 
 /**

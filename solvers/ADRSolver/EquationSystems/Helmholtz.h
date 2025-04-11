@@ -59,16 +59,14 @@ public:
     /// Name of class
     static std::string className;
 
-    ~Helmholtz() override = default;
-
 protected:
     Helmholtz(const LibUtilities::SessionReaderSharedPtr &pSession,
               const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
+    ~Helmholtz() override = default;
+
     void v_InitObject(bool DeclareFields = true) override;
     void v_GenerateSummary(SolverUtils::SummaryList &s) override;
-
-private:
     Array<OneD, bool> v_GetSystemSingularChecks() override;
 };
 

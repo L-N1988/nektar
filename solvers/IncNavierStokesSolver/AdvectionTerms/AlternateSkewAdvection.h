@@ -51,6 +51,7 @@ public:
     {
         return MemoryManager<AlternateSkewAdvection>::AllocateSharedPtr();
     }
+
     /// Name of class
     static std::string className;
     static std::string className2;

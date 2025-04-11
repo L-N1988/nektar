@@ -62,11 +62,11 @@ public:
 
     static std::string className;
 
-    virtual ~TemplatePressureArea() = default;
-
 protected:
     TemplatePressureArea(Array<OneD, MultiRegions::ExpListSharedPtr> pVessel,
                          const LibUtilities::SessionReaderSharedPtr pSession);
+
+    virtual ~TemplatePressureArea() = default;
 
     virtual void v_GetPressure(NekDouble &P, const NekDouble &beta,
                                const NekDouble &A, const NekDouble &A0,

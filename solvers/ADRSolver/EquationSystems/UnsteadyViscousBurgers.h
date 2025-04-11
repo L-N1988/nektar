@@ -61,9 +61,6 @@ public:
     /// Name of class
     static std::string className;
 
-    /// Destructor
-    ~UnsteadyViscousBurgers() override = default;
-
 protected:
     // Use Spectral Vanishing Viscosity
     bool m_useSpecVanVisc;
@@ -81,11 +78,10 @@ protected:
     UnsteadyViscousBurgers(const LibUtilities::SessionReaderSharedPtr &pSession,
                            const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-    /// Evaluate the flux at each solution point for the diffusion part
-    void GetFluxVectorDiff(
-        const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        const Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &qfield,
-        Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &viscousTensor);
+    ~UnsteadyViscousBurgers() override = default;
+
+    /// Initialise the object
+    void v_InitObject(bool DeclareFields = true) override;
 
     /// Compute the RHS
     void DoOdeRhs(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
@@ -98,8 +94,11 @@ protected:
         Array<OneD, Array<OneD, NekDouble>> &outarray, NekDouble time,
         NekDouble lambda);
 
-    /// Initialise the object
-    void v_InitObject(bool DeclareFields = true) override;
+    /// Evaluate the flux at each solution point for the diffusion part
+    void GetFluxVectorDiff(
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        const Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &qfield,
+        Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &viscousTensor);
 
     /// Print Summary
     void v_GenerateSummary(SolverUtils::SummaryList &s) override;

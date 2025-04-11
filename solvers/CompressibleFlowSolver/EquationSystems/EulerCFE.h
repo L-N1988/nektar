@@ -60,11 +60,11 @@ public:
     /// Name of class.
     static std::string className;
 
-    ~EulerCFE() override = default;
-
 protected:
     EulerCFE(const LibUtilities::SessionReaderSharedPtr &pSession,
              const SpatialDomains::MeshGraphSharedPtr &pGraph);
+
+    ~EulerCFE() override = default;
 
     void v_InitObject(bool DeclareFields = true) override;
 

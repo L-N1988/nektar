@@ -70,9 +70,10 @@ public:
         v_InitObject();
     }
 
-    void DoPreconCfs(const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-                     const Array<OneD, NekDouble> &pInput,
-                     Array<OneD, NekDouble> &pOutput, const bool &flag)
+    inline void DoPreconCfs(
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput,
+        const bool &flag)
     {
         v_DoPreconCfs(pFields, pInput, pOutput, flag);
     }

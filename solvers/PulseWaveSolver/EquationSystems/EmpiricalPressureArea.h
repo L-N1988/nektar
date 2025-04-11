@@ -66,11 +66,11 @@ public:
     // Name of class
     static std::string className;
 
-    ~EmpiricalPressureArea() override = default;
-
 protected:
     EmpiricalPressureArea(Array<OneD, MultiRegions::ExpListSharedPtr> pVessel,
                           const LibUtilities::SessionReaderSharedPtr pSession);
+
+    ~EmpiricalPressureArea() override = default;
 
     void v_GetPressure(NekDouble &P, const NekDouble &beta, const NekDouble &A,
                        const NekDouble &A0, const NekDouble &dAUdx,

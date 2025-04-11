@@ -65,8 +65,6 @@ public:
     // Name of class
     static std::string className;
 
-    ~NavierStokesCFE() override = default;
-
 protected:
     std::string m_ViscosityType;
     /// flag to switch between constant viscosity and Sutherland
@@ -96,6 +94,8 @@ protected:
 
     NavierStokesCFE(const LibUtilities::SessionReaderSharedPtr &pSession,
                     const SpatialDomains::MeshGraphSharedPtr &pGraph);
+
+    ~NavierStokesCFE() override = default;
 
     void GetViscousFluxVectorConservVar(
         const size_t nDim, const Array<OneD, Array<OneD, NekDouble>> &inarray,

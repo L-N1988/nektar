@@ -64,15 +64,7 @@ public:
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray);
 
-    ~VCSMapping() override = default;
-
-    void v_InitObject(bool DeclareField = true) override;
-
 protected:
-    /// Constructor.
-    VCSMapping(const LibUtilities::SessionReaderSharedPtr &pSession,
-               const SpatialDomains::MeshGraphSharedPtr &pGraph);
-
     // Mapping object
     GlobalMapping::MappingSharedPtr m_mapping;
 
@@ -94,6 +86,13 @@ protected:
 
     // Pressure gradient (to avoid duplicate calculations)
     Array<OneD, Array<OneD, NekDouble>> m_gradP;
+
+    VCSMapping(const LibUtilities::SessionReaderSharedPtr &pSession,
+               const SpatialDomains::MeshGraphSharedPtr &pGraph);
+
+    ~VCSMapping() override = default;
+
+    void v_InitObject(bool DeclareField = true) override;
 
     // Virtual functions
     void v_DoInitialise(bool dumpInitialConditions = true) override;

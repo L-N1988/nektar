@@ -73,14 +73,14 @@ public:
     /// Name of class
     static std::string className;
 
-    ~ImplicitExtrapolate() override = default;
-
 protected:
     ImplicitExtrapolate(const LibUtilities::SessionReaderSharedPtr pSession,
                         Array<OneD, MultiRegions::ExpListSharedPtr> pFields,
                         MultiRegions::ExpListSharedPtr pPressure,
                         const Array<OneD, int> pVel,
                         const SolverUtils::AdvectionSharedPtr advObject);
+
+    ~ImplicitExtrapolate() override = default;
 
     void v_EvaluatePressureBCs(
         const Array<OneD, const Array<OneD, NekDouble>> &fields,

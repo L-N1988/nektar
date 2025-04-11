@@ -69,8 +69,6 @@ ArtificialDiffusionFactory &GetArtificialDiffusionFactory();
 class ArtificialDiffusion
 {
 public:
-    virtual ~ArtificialDiffusion() = default;
-
     /// Apply the artificial diffusion
     void DoArtificialDiffusion(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
@@ -112,6 +110,8 @@ protected:
         const LibUtilities::SessionReaderSharedPtr &pSession,
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
         const int spacedim);
+
+    virtual ~ArtificialDiffusion() = default;
 
     virtual void v_DoArtificialDiffusion(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,

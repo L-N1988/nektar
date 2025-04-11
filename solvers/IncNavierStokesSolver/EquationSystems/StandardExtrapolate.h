@@ -75,14 +75,14 @@ public:
     /// Name of class
     static std::string className;
 
-    ~StandardExtrapolate() override = default;
-
 protected:
     StandardExtrapolate(const LibUtilities::SessionReaderSharedPtr pSession,
                         Array<OneD, MultiRegions::ExpListSharedPtr> pFields,
                         MultiRegions::ExpListSharedPtr pPressure,
                         const Array<OneD, int> pVel,
                         const SolverUtils::AdvectionSharedPtr advObject);
+
+    ~StandardExtrapolate() override = default;
 
     void v_EvaluatePressureBCs(
         const Array<OneD, const Array<OneD, NekDouble>> &fields,

@@ -75,10 +75,6 @@ class MMFMaxwell : public SolverUtils::MMFSystem
 public:
     friend class MemoryManager<MMFMaxwell>;
 
-    CloakType m_CloakType;
-    SourceType m_SourceType;
-    bool m_DispersiveCloak;
-
     /// Creates an instance of this class
     static SolverUtils::EquationSystemSharedPtr create(
         const LibUtilities::SessionReaderSharedPtr &pSession,
@@ -93,15 +89,11 @@ public:
     /// Name of class
     static std::string className;
 
-    /// Initialise the object
-    void v_InitObject(bool DeclareFields = true) override;
-
-    void v_DoSolve() override;
-
-    /// Destructor
-    ~MMFMaxwell() override = default;
-
 protected:
+    CloakType m_CloakType;
+    SourceType m_SourceType;
+    bool m_DispersiveCloak;
+
     int m_ElemtGroup0;
     int m_ElemtGroup1;
     int m_boundaryforSF;
@@ -125,10 +117,6 @@ protected:
 
     Array<OneD, Array<OneD, NekDouble>> m_CrossProductMF;
 
-    /// Session reader
-    MMFMaxwell(const LibUtilities::SessionReaderSharedPtr &pSession,
-               const SpatialDomains::MeshGraphSharedPtr &pGraph);
-
     NekDouble m_freq;
 
     NekDouble m_n1, m_n2, m_n3;
@@ -143,6 +131,16 @@ protected:
     int m_NoInc;
 
     Array<OneD, NekDouble> m_coriolis;
+
+    MMFMaxwell(const LibUtilities::SessionReaderSharedPtr &pSession,
+               const SpatialDomains::MeshGraphSharedPtr &pGraph);
+
+    ~MMFMaxwell() override = default;
+
+    /// Initialise the object
+    void v_InitObject(bool DeclareFields = true) override;
+
+    void v_DoSolve() override;
 
     /// Compute the RHS
     void DoOdeRhs(const Array<OneD, const Array<OneD, NekDouble>> &inarray,

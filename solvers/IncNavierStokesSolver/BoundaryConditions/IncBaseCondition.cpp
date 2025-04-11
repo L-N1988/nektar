@@ -356,11 +356,4 @@ void IncBaseCondition::RigidBodyVelocity(
     }
 }
 
-void IncBaseCondition::v_Update(
-    [[maybe_unused]] const Array<OneD, const Array<OneD, NekDouble>> &fields,
-    [[maybe_unused]] const Array<OneD, const Array<OneD, NekDouble>> &Adv,
-    [[maybe_unused]] std::map<std::string, NekDouble> &params)
-{
-}
-
 } // namespace Nektar

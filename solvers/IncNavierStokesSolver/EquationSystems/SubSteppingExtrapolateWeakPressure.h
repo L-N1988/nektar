@@ -72,14 +72,14 @@ public:
     /// Name of class
     static std::string className;
 
-    ~SubSteppingExtrapolateWeakPressure() override = default;
-
 protected:
     SubSteppingExtrapolateWeakPressure(
         const LibUtilities::SessionReaderSharedPtr pSession,
         Array<OneD, MultiRegions::ExpListSharedPtr> pFields,
         MultiRegions::ExpListSharedPtr pPressure, const Array<OneD, int> pVel,
         const SolverUtils::AdvectionSharedPtr advObject);
+
+    ~SubSteppingExtrapolateWeakPressure() override = default;
 
     void v_SubStepSetPressureBCs(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,

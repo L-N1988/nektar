@@ -54,6 +54,7 @@ class FileFieldInterpolator
 {
 public:
     friend class MemoryManager<FileFieldInterpolator>;
+
     void InitObject(
         const std::string functionName,
         LibUtilities::SessionReaderSharedPtr pSession,
@@ -122,13 +123,19 @@ public:
         p->InitObject();
         return p;
     }
+
     /// Name of class
     static std::string className;
 
-    /// Destructor
+protected:
+    FileSolution(const LibUtilities::SessionReaderSharedPtr &pSession,
+                 const SpatialDomains::MeshGraphSharedPtr &pGraph);
+
     ~FileSolution() override = default;
 
-protected:
+    /// Initialise the object
+    void v_InitObject(bool DeclareField = true) override;
+
     void v_GetVelocity(
         const Array<OneD, const Array<OneD, NekDouble>> &physfield,
         Array<OneD, Array<OneD, NekDouble>> &velocity) override;
@@ -145,10 +152,6 @@ protected:
 
     bool v_HasConstantDensity() override;
 
-    /// Session reader
-    FileSolution(const LibUtilities::SessionReaderSharedPtr &pSession,
-                 const SpatialDomains::MeshGraphSharedPtr &pGraph);
-
     /// Compute the RHS
     void DoOdeRhs(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
                   Array<OneD, Array<OneD, NekDouble>> &outarray,
@@ -163,9 +166,6 @@ protected:
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray, NekDouble time,
         NekDouble lambda);
-
-    /// Initialise the object
-    void v_InitObject(bool DeclareField = true) override;
 
     bool v_PostIntegrate(int step) override;
 

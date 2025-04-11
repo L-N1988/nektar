@@ -40,6 +40,7 @@
 
 namespace Nektar
 {
+
 class FilterAeroForcesSPM : public SolverUtils::Filter
 {
 public:
@@ -60,8 +61,6 @@ public:
     /// Name of the class
     static std::string className;
 
-    ~FilterAeroForcesSPM() override = default;
-
     // Calculates the forces and fills the array 'm_Forces' up
     void CalculateForces(const Array<OneD, Array<OneD, NekDouble>> &pIntVel,
                          const Array<OneD, Array<OneD, NekDouble>> &pUpPrev,
@@ -69,11 +68,6 @@ public:
                          NekDouble time, NekDouble dt);
 
 protected:
-    FilterAeroForcesSPM(
-        const LibUtilities::SessionReaderSharedPtr &pSession,
-        const std::shared_ptr<SolverUtils::EquationSystem> &pEquation,
-        const std::map<std::string, std::string> &pParams);
-
     unsigned int m_index;
     unsigned int m_outputFrequency;
     std::string m_outputFile;
@@ -86,6 +80,13 @@ protected:
     NekDouble m_spaceDim;
     /// Array storing the last value of the aerodynamic forces
     Array<OneD, NekDouble> m_Forces;
+
+    FilterAeroForcesSPM(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const std::shared_ptr<SolverUtils::EquationSystem> &pEquation,
+        const std::map<std::string, std::string> &pParams);
+
+    ~FilterAeroForcesSPM() override = default;
 
     void v_Initialise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,

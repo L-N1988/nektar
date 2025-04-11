@@ -64,13 +64,13 @@ public:
     // Name of class
     static std::string className;
 
-    ~NavierStokesCFEAxisym() override = default;
-
 protected:
     Array<OneD, Array<OneD, NekDouble>> m_viscousForcing;
 
     NavierStokesCFEAxisym(const LibUtilities::SessionReaderSharedPtr &pSession,
                           const SpatialDomains::MeshGraphSharedPtr &pGraph);
+
+    ~NavierStokesCFEAxisym() override = default;
 
     void v_InitObject(bool DeclareFields = true) override;
 

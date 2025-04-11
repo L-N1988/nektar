@@ -62,18 +62,16 @@ public:
     /// Name of class
     static std::string className;
 
-    /// Destructor
-    ~LEE() override = default;
-
 protected:
-    /// Initialises UnsteadySystem class members.
     LEE(const LibUtilities::SessionReaderSharedPtr &pSession,
         const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-    void v_AddLinTerm(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-                      Array<OneD, Array<OneD, NekDouble>> &outarray) override;
+    ~LEE() override = default;
 
     void v_InitObject(bool DeclareFields = true) override;
+
+    void v_AddLinTerm(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+                      Array<OneD, Array<OneD, NekDouble>> &outarray) override;
 
     void v_GetFluxVector(
         const Array<OneD, Array<OneD, NekDouble>> &physfield,
