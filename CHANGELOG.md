@@ -27,6 +27,7 @@ v5.8.0
 - Delete redundant lines in the Navier-Stokes diffusion functions (!2058)
 - Various tidy-up for solvers (!2056)
 - Add Compilation option for boost filesystem (!2092)
+- Update minimum Cmake version to 3.10 (!2096)
 
 **CI**
 - Fix CubeAllElements performance test tolerance (!1943)
