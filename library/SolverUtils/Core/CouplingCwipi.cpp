@@ -44,7 +44,6 @@
 #include <MultiRegions/ContField.h>
 
 #include <boost/format.hpp>
-#include <boost/functional/hash.hpp>
 
 #define OUTPUT_FREQ 0
 
@@ -138,8 +137,8 @@ void CouplingCwipi::v_Init()
     // sure m_recvTag < 32767. Only caveat: m_recvTag is not guaranteed to be
     // unique.
     m_recvTag =
-        boost::hash<std::string>()(m_couplingName + m_config["REMOTENAME"] +
-                                   m_config["LOCALNAME"]) %
+        std::hash<std::string>()(m_couplingName + m_config["REMOTENAME"] +
+                                 m_config["LOCALNAME"]) %
         32767;
 
     cwipi_add_local_int_control_parameter("receiveTag", m_recvTag);
