@@ -31,6 +31,7 @@ v5.8.0
 - Deprecated FR method (!2102)
 - Remove some boost include in favor of C++17 build-in features (!2097)
 - Various tidy-up in SolverUtils (!2100)
+- Use forward declaration in header files for GlobalMapping (!2099)
 
 **CI**
 - Fix CubeAllElements performance test tolerance (!1943)
