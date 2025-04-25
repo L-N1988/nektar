@@ -29,6 +29,7 @@ v5.8.0
 - Add Compilation option for boost filesystem (!2092)
 - Update minimum Cmake version to 3.10 (!2096)
 - Deprecated FR method (!2102)
+- Remove some boost include in favor of C++17 build-in features (!2097)
 
 **CI**
 - Fix CubeAllElements performance test tolerance (!1943)
