@@ -28,6 +28,7 @@ v5.8.0
 - Various tidy-up for solvers (!2056)
 - Add Compilation option for boost filesystem (!2092)
 - Update minimum Cmake version to 3.10 (!2096)
+- Various tidy-up in SolverUtils (!2100)
 
 **CI**
 - Fix CubeAllElements performance test tolerance (!1943)
