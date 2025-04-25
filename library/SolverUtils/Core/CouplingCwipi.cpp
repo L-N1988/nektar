@@ -50,8 +50,6 @@
 namespace Nektar::SolverUtils
 {
 
-using namespace std;
-
 std::string CouplingCwipi::className =
     GetCouplingFactory().RegisterCreatorFunction("Cwipi", CouplingCwipi::create,
                                                  "Cwipi Coupling");
@@ -195,7 +193,7 @@ void CouplingCwipi::v_Init()
     if (m_evalField->GetComm()->GetRank() == 0 &&
         m_evalField->GetSession()->DefinesCmdLineArgument("verbose"))
     {
-        cout << "locating..." << endl;
+        std::cout << "locating..." << std::endl;
     }
     cwipi_locate(m_couplingName.c_str());
 
@@ -351,9 +349,9 @@ void CouplingCwipi::EvaluateFields(
 
         ASSERTL0(elmtid >= 0,
                  "no element found for (" +
-                     boost::lexical_cast<string>(distCoords[i][0]) + ", " +
-                     boost::lexical_cast<string>(distCoords[i][1]) + ", " +
-                     boost::lexical_cast<string>(distCoords[i][2]) + ")");
+                     boost::lexical_cast<std::string>(distCoords[i][0]) + ", " +
+                     boost::lexical_cast<std::string>(distCoords[i][1]) + ", " +
+                     boost::lexical_cast<std::string>(distCoords[i][2]) + ")");
 
         int offset = m_evalField->GetPhys_Offset(elmtid);
 
@@ -467,18 +465,19 @@ void CouplingCwipi::AnnounceMesh()
     // output the mesh in tecplot format. If this works, CWIPI will be able
     // to process it, too
     /*
-    cout << "VARIABLES = \"X\", \"Y\", \"Z\", \"U\"" <<  endl;
-    cout << "ZONE NODES=" <<  nVerts << ",ELEMENTS=" <<  nElts;
-    cout << ",DATAPACKING=POINT, ZONETYPE=FETETRAHEDRON" <<  endl;
+    std::cout << "VARIABLES = \"X\", \"Y\", \"Z\", \"U\"" <<  std::endl;
+    std::cout << "ZONE NODES=" <<  nVerts << ",ELEMENTS=" <<  nElts;
+    std::cout << ",DATAPACKING=POINT, ZONETYPE=FETETRAHEDRON" <<  std::endl;
     for (int i = 0; i < nVerts; ++i)
     {
-        cout << m_coords[3*i + 0] << " " << m_coords[3*i + 1] << " ";
-        cout << m_coords[3*i + 2] << " " <<  1.0 << endl;
+        std::cout << m_coords[3*i + 0] << " " << m_coords[3*i + 1] << " ";
+        std::cout << m_coords[3*i + 2] << " " <<  1.0 << std::endl;
     }
     for (int i = 0; i < nElts; ++i)
     {
-        cout << m_connec[i*4 + 0] << " " << m_connec[i*4 + 1] << " ";
-        cout << m_connec[i*4 + 2] <<  " " <<  m_connec[i*4 + 3] <<  endl;
+        std::cout << m_connec[i*4 + 0] << " " << m_connec[i*4 + 1] << " ";
+        std::cout << m_connec[i*4 + 2] <<  " " <<  m_connec[i*4 + 3] <<
+    std::endl;
     }
     */
 
@@ -570,7 +569,7 @@ void CouplingCwipi::SendCallback(
 void CouplingCwipi::v_Send(
     const int step, const NekDouble time,
     const Array<OneD, const Array<OneD, NekDouble>> &field,
-    vector<string> &varNames)
+    std::vector<std::string> &varNames)
 {
     if (m_nSendVars < 1 || m_sendSteps < 1)
     {
@@ -583,7 +582,7 @@ void CouplingCwipi::v_Send(
 
         m_lastSend = step;
 
-        vector<int> sendVarsToVars =
+        std::vector<int> sendVarsToVars =
             GenerateVariableMapping(varNames, m_sendFieldNames);
         m_sendField = Array<OneD, Array<OneD, NekDouble>>(m_nSendVars);
         for (int i = 0; i < sendVarsToVars.size(); ++i)
@@ -594,8 +593,8 @@ void CouplingCwipi::v_Send(
         if (m_evalField->GetComm()->GetRank() == 0 &&
             m_evalField->GetSession()->DefinesCmdLineArgument("verbose"))
         {
-            cout << "sending fields at i = " << step << ", t = " << time
-                 << endl;
+            std::cout << "sending fields at i = " << step << ", t = " << time
+                      << std::endl;
         }
 
         LibUtilities::Timer timer1;
@@ -611,7 +610,8 @@ void CouplingCwipi::v_Send(
         if (m_evalField->GetComm()->GetRank() == 0 &&
             m_evalField->GetSession()->DefinesCmdLineArgument("verbose"))
         {
-            cout << "Send total time: " << timer1.TimePerTest(1) << endl;
+            std::cout << "Send total time: " << timer1.TimePerTest(1)
+                      << std::endl;
         }
     }
 }
@@ -634,7 +634,8 @@ void CouplingCwipi::SendComplete()
     if (m_evalField->GetComm()->GetRank() == 0 &&
         m_evalField->GetSession()->DefinesCmdLineArgument("verbose"))
     {
-        cout << "Send waiting time: " << timer1.TimePerTest(1) << endl;
+        std::cout << "Send waiting time: " << timer1.TimePerTest(1)
+                  << std::endl;
     }
 }
 
@@ -659,13 +660,14 @@ void CouplingCwipi::ReceiveStart()
     if (m_evalField->GetComm()->GetRank() == 0 &&
         m_evalField->GetSession()->DefinesCmdLineArgument("verbose"))
     {
-        cout << "Receive start time: " << timer1.TimePerTest(1) << endl;
+        std::cout << "Receive start time: " << timer1.TimePerTest(1)
+                  << std::endl;
     }
 }
 
 void CouplingCwipi::v_Receive(const int step, const NekDouble time,
                               Array<OneD, Array<OneD, NekDouble>> &field,
-                              vector<string> &varNames)
+                              std::vector<std::string> &varNames)
 {
     if (m_nRecvVars < 1 || m_recvSteps < 1)
     {
@@ -673,7 +675,7 @@ void CouplingCwipi::v_Receive(const int step, const NekDouble time,
     }
 
     Array<OneD, Array<OneD, NekDouble>> recvFields(m_nRecvVars);
-    vector<int> recvVarsToVars =
+    std::vector<int> recvVarsToVars =
         GenerateVariableMapping(varNames, m_recvFieldNames);
     ASSERTL1(m_nRecvVars == recvVarsToVars.size(), "field size mismatch");
     for (int i = 0; i < recvVarsToVars.size(); ++i)
@@ -730,8 +732,8 @@ void CouplingCwipi::ReceiveCwipi(const int step, const NekDouble time,
         if (m_evalField->GetComm()->GetRank() == 0 &&
             m_evalField->GetSession()->DefinesCmdLineArgument("verbose"))
         {
-            cout << "waiting for receive at i = " << step << ", t = " << time
-                 << endl;
+            std::cout << "waiting for receive at i = " << step
+                      << ", t = " << time << std::endl;
         }
 
         LibUtilities::Timer timer1, timer2, timer3;
@@ -755,8 +757,8 @@ void CouplingCwipi::ReceiveCwipi(const int step, const NekDouble time,
         Array<OneD, int> notLoc;
         if (nNotLoc != 0)
         {
-            cout << "WARNING: relocating " << nNotLoc << " of " << m_nPoints
-                 << " points" << endl;
+            std::cout << "WARNING: relocating " << nNotLoc << " of "
+                      << m_nPoints << " points" << std::endl;
 
             const int *tmp =
                 cwipi_get_not_located_points(m_couplingName.c_str());
@@ -864,8 +866,8 @@ void CouplingCwipi::ReceiveCwipi(const int step, const NekDouble time,
                     m_evalField->GetSession()->DefinesCmdLineArgument(
                         "verbose"))
                 {
-                    cout << "Smoother time (" << m_recvFieldNames[i]
-                         << "): " << timer3.TimePerTest(1) << endl;
+                    std::cout << "Smoother time (" << m_recvFieldNames[i]
+                              << "): " << timer3.TimePerTest(1) << std::endl;
                 }
             }
         }
@@ -882,8 +884,10 @@ void CouplingCwipi::ReceiveCwipi(const int step, const NekDouble time,
         if (m_evalField->GetComm()->GetRank() == 0 &&
             m_evalField->GetSession()->DefinesCmdLineArgument("verbose"))
         {
-            cout << "Receive total time: " << timer1.TimePerTest(1) << ", ";
-            cout << "Receive waiting time: " << timer2.TimePerTest(1) << endl;
+            std::cout << "Receive total time: " << timer1.TimePerTest(1)
+                      << ", ";
+            std::cout << "Receive waiting time: " << timer2.TimePerTest(1)
+                      << std::endl;
         }
 
         ReceiveStart();
@@ -1011,8 +1015,9 @@ void CouplingCwipi::ExtrapolateFields(
     if (m_evalField->GetComm()->GetRank() == 0 &&
         m_evalField->GetSession()->DefinesCmdLineArgument("verbose"))
     {
-        cout << "ExtrapolateFields total time: " << timer1.TimePerTest(1);
-        cout << " (AllGathervI: " << timer2.TimePerTest(1) << ")" << endl;
+        std::cout << "ExtrapolateFields total time: " << timer1.TimePerTest(1);
+        std::cout << " (AllGathervI: " << timer2.TimePerTest(1) << ")"
+                  << std::endl;
     }
 }
 
@@ -1056,7 +1061,8 @@ void CouplingCwipi::DumpRawFields(const NekDouble time,
     if (m_evalField->GetComm()->GetRank() == 0 &&
         m_evalField->GetSession()->DefinesCmdLineArgument("verbose"))
     {
-        cout << "DumpRawFields total time: " << timer1.TimePerTest(1) << endl;
+        std::cout << "DumpRawFields total time: " << timer1.TimePerTest(1)
+                  << std::endl;
     }
 }
 } // namespace Nektar::SolverUtils
