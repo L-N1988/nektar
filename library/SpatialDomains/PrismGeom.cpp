@@ -699,11 +699,9 @@ void PrismGeom::SetUpFaceOrientation()
             ASSERTL0(
                 orientation < StdRegions::eDir1FwdDir2_Dir2FwdDir1,
                 "Orientation of triangular face (id = " +
-                    boost::lexical_cast<string>(m_faces[f]->GetGlobalID()) +
-                    ") is inconsistent with face " +
-                    boost::lexical_cast<string>(f) +
-                    " of prism element (id = " +
-                    boost::lexical_cast<string>(m_globalID) +
+                    std::to_string(m_faces[f]->GetGlobalID()) +
+                    ") is inconsistent with face " + std::to_string(f) +
+                    " of prism element (id = " + std::to_string(m_globalID) +
                     ") since Dir2 is aligned with Dir1. Mesh setup "
                     "needs investigation");
         }

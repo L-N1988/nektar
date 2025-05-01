@@ -841,7 +841,7 @@ void MeshGraphIOXml::v_ReadCurves()
                      "Number of points specificed by attribute "
                      "NUMPOINTS is different from number of points "
                      "in list (edgeid = " +
-                         boost::lexical_cast<string>(edgeid));
+                         std::to_string(edgeid));
 
             curvedEdges[edgeid] = curve;
 
@@ -2775,8 +2775,7 @@ void MeshGraphIOXml::WriteDefaultExpansion(TiXmlElement *root)
         {
             TiXmlElement *exp = new TiXmlElement("E");
             exp->SetAttribute("COMPOSITE",
-                              "C[" + boost::lexical_cast<string>(it->first) +
-                                  "]");
+                              "C[" + std::to_string(it->first) + "]");
             exp->SetAttribute("NUMMODES", 4);
             exp->SetAttribute("TYPE", "MODIFIED");
             exp->SetAttribute("FIELDS", "u");

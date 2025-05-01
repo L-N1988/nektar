@@ -630,8 +630,7 @@ ExpansionInfoShPtr MeshGraph::GetExpansionInfo(GeometrySharedPtr geom,
 
     auto iter = expansionMap->find(geom->GetGlobalID());
     ASSERTL1(iter != expansionMap->end(),
-             "Could not find expansion " +
-                 boost::lexical_cast<string>(geom->GetGlobalID()) +
+             "Could not find expansion " + std::to_string(geom->GetGlobalID()) +
                  " in expansion for variable " + variable);
     return iter->second;
 }
@@ -2731,7 +2730,7 @@ void MeshGraph::ReadRefinementInfo()
                 ASSERTL0(idStr, "REF was not defined in REFINEMENT section "
                                 "of input");
 
-                unsigned id = boost::lexical_cast<unsigned int>(idStr);
+                unsigned id = std::stol(idStr);
 
                 // Extract Radius
                 const char *radiusStr = refinement->Attribute("RADIUS");
@@ -2840,7 +2839,7 @@ void MeshGraph::ReadRefinementInfo()
                     }
                     else
                     {
-                        n_modesRef = boost::lexical_cast<int>(numModesStr);
+                        n_modesRef = std::stoi(numModesStr);
                     }
                     nModesVector.push_back(n_modesRef);
                     nPointsVector.clear(); // No points.
@@ -3130,7 +3129,7 @@ void MeshGraph::ReadExpansionInfo()
                     }
                     else
                     {
-                        num_modes = boost::lexical_cast<int>(nummodesStr);
+                        num_modes = std::stoi(nummodesStr);
                     }
 
                     m_useExpansionType = true;
@@ -3607,7 +3606,7 @@ void MeshGraph::ReadExpansionInfo()
                     }
                     else
                     {
-                        num_modes_x = boost::lexical_cast<int>(nummodesStr);
+                        num_modes_x = std::stoi(nummodesStr);
                     }
                 }
 
@@ -3640,7 +3639,7 @@ void MeshGraph::ReadExpansionInfo()
                     }
                     else
                     {
-                        num_modes_y = boost::lexical_cast<int>(nummodesStr);
+                        num_modes_y = std::stoi(nummodesStr);
                     }
                 }
 
@@ -3673,7 +3672,7 @@ void MeshGraph::ReadExpansionInfo()
                     }
                     else
                     {
-                        num_modes_z = boost::lexical_cast<int>(nummodesStr);
+                        num_modes_z = std::stoi(nummodesStr);
                     }
                 }
 

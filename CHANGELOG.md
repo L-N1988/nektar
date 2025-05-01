@@ -33,6 +33,7 @@ v5.8.0
 - Various tidy-up in SolverUtils (!2100)
 - Use forward declaration in header files for GlobalMapping (!2099)
 - Remove dummy `APESolver` executable. (!2119)
+- Tidy use of boost_lexical_cast (!2109)
 
 **CI**
 - Fix CubeAllElements performance test tolerance (!1943)

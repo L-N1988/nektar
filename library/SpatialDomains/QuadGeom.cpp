@@ -408,14 +408,14 @@ void QuadGeom::v_FillGeom()
             ASSERTL0(nEdgePts * nEdgePts == npts,
                      "NUMPOINTS should be a square number in"
                      " quadrilteral " +
-                         boost::lexical_cast<string>(m_globalID));
+                         std::to_string(m_globalID));
 
             for (i = 0; i < kNedges; ++i)
             {
                 ASSERTL0(m_edges[i]->GetXmap()->GetNcoeffs() == nEdgePts,
                          "Number of edge points does not correspond to "
                          "number of face points in quadrilateral " +
-                             boost::lexical_cast<string>(m_globalID));
+                             std::to_string(m_globalID));
             }
 
             for (i = 0; i < m_coordim; ++i)

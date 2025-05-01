@@ -334,7 +334,7 @@ void TriGeom::v_FillGeom()
             ASSERTL0(nEdgePts * (nEdgePts + 1) / 2 == N,
                      "NUMPOINTS should be a triangle number for"
                      " triangle curved face " +
-                         boost::lexical_cast<string>(m_globalID));
+                         std::to_string(m_globalID));
 
             // Sanity check 1: are curved vertices consistent with
             // triangle vertices?
@@ -361,7 +361,7 @@ void TriGeom::v_FillGeom()
                 ASSERTL0(edgeCurve->m_points.size() == nEdgePts,
                          "Number of edge points does not correspond "
                          "to number of face points in triangle " +
-                             boost::lexical_cast<string>(m_globalID));
+                             std::to_string(m_globalID));
 
                 const int offset  = 3 + i * (nEdgePts - 2);
                 NekDouble maxDist = 0.0;
@@ -457,14 +457,14 @@ void TriGeom::v_FillGeom()
             ASSERTL0(nEdgePts * nEdgePts == npts,
                      "NUMPOINTS should be a square number for"
                      " triangle " +
-                         boost::lexical_cast<string>(m_globalID));
+                         std::to_string(m_globalID));
 
             for (i = 0; i < kNedges; ++i)
             {
                 ASSERTL0(m_edges[i]->GetXmap()->GetNcoeffs() == nEdgePts,
                          "Number of edge points does not correspond to "
                          "number of face points in triangle " +
-                             boost::lexical_cast<string>(m_globalID));
+                             std::to_string(m_globalID));
             }
 
             for (i = 0; i < m_coordim; ++i)

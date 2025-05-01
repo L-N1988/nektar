@@ -1688,9 +1688,8 @@ void MeshGraphIOHDF5::v_WriteGeometry(
                 m_meshGraph->GetMeshDimension())
             {
                 TiXmlElement *exp = new TiXmlElement("E");
-                exp->SetAttribute(
-                    "COMPOSITE",
-                    "C[" + boost::lexical_cast<string>(it->first) + "]");
+                exp->SetAttribute("COMPOSITE",
+                                  "C[" + std::to_string(it->first) + "]");
                 exp->SetAttribute("NUMMODES", 4);
                 exp->SetAttribute("TYPE", "MODIFIED");
                 exp->SetAttribute("FIELDS", "u");
