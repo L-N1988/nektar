@@ -541,7 +541,7 @@ Geometry1DSharedPtr Geometry3D::v_GetEdge(int i) const
 {
     ASSERTL2(i >= 0 && i <= m_edges.size() - 1,
              "Edge ID must be between 0 and " +
-                 boost::lexical_cast<string>(m_edges.size() - 1));
+                 std::to_string(m_edges.size() - 1));
     return m_edges[i];
 }
 
@@ -555,7 +555,7 @@ inline StdRegions::Orientation Geometry3D::v_GetEorient(const int i) const
 {
     ASSERTL2(i >= 0 && i <= m_edges.size() - 1,
              "Edge ID must be between 0 and " +
-                 boost::lexical_cast<string>(m_edges.size() - 1));
+                 std::to_string(m_edges.size() - 1));
     return m_eorient[i];
 }
 
@@ -563,7 +563,7 @@ StdRegions::Orientation Geometry3D::v_GetForient(const int i) const
 {
     ASSERTL2(i >= 0 && i <= m_faces.size() - 1,
              "Face ID must be between 0 and " +
-                 boost::lexical_cast<string>(m_faces.size() - 1));
+                 std::to_string(m_faces.size() - 1));
     return m_forient[i];
 }
 

@@ -371,8 +371,7 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
         }
 
         ASSERTL0(m_boundaryRegions.count(boundaryRegionID) == 1,
-                 "Boundary region " +
-                     boost::lexical_cast<string>(boundaryRegionID) +
+                 "Boundary region " + std::to_string(boundaryRegionID) +
                      " not found");
 
         // Find the communicator that belongs to this ID
