@@ -40,8 +40,6 @@
 #include <SpatialDomains/TriGeom.h>
 #include <StdRegions/StdPyrExp.h>
 
-using namespace std;
-
 namespace Nektar::SpatialDomains
 {
 const unsigned int PyrGeom::EdgeNormalToFaceVert[5][4] = {
@@ -69,10 +67,6 @@ PyrGeom::PyrGeom(int id, const Geometry2DSharedPtr faces[])
     SetUpLocalVertices();
     SetUpEdgeOrientation();
     SetUpFaceOrientation();
-}
-
-PyrGeom::~PyrGeom()
-{
 }
 
 void PyrGeom::v_GenGeomFactors()
@@ -180,8 +174,8 @@ void PyrGeom::SetUpLocalEdges()
             {
                 if (m_faces[0]->GetEid(i) == m_faces[f]->GetEid(j))
                 {
-                    edge =
-                        dynamic_pointer_cast<SegGeom>((m_faces[0])->GetEdge(i));
+                    edge = std::dynamic_pointer_cast<SegGeom>(
+                        (m_faces[0])->GetEdge(i));
                     m_edges.push_back(edge);
                     check++;
                 }
@@ -214,7 +208,8 @@ void PyrGeom::SetUpLocalEdges()
         {
             if ((m_faces[1])->GetEid(i) == (m_faces[4])->GetEid(j))
             {
-                edge = dynamic_pointer_cast<SegGeom>((m_faces[1])->GetEdge(i));
+                edge = std::dynamic_pointer_cast<SegGeom>(
+                    (m_faces[1])->GetEdge(i));
                 m_edges.push_back(edge);
                 check++;
             }
@@ -247,8 +242,8 @@ void PyrGeom::SetUpLocalEdges()
             {
                 if ((m_faces[f])->GetEid(i) == (m_faces[f + 1])->GetEid(j))
                 {
-                    edge =
-                        dynamic_pointer_cast<SegGeom>((m_faces[f])->GetEdge(i));
+                    edge = std::dynamic_pointer_cast<SegGeom>(
+                        (m_faces[f])->GetEdge(i));
                     m_edges.push_back(edge);
                     check++;
                 }
@@ -687,7 +682,7 @@ void PyrGeom::v_Setup()
  */
 void PyrGeom::SetUpXmap()
 {
-    vector<int> tmp;
+    std::vector<int> tmp;
     int order0, order1;
 
     if (m_forient[0] < 9)

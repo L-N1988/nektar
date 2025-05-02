@@ -41,8 +41,6 @@
 #include <SpatialDomains/SegGeom.h>
 #include <StdRegions/StdQuadExp.h>
 
-using namespace std;
-
 namespace Nektar::SpatialDomains
 {
 
@@ -98,16 +96,12 @@ QuadGeom::QuadGeom(const QuadGeom &in) : Geometry2D(in)
     }
 }
 
-QuadGeom::~QuadGeom()
-{
-}
-
 void QuadGeom::SetUpXmap()
 {
-    int order0 = max(m_edges[0]->GetXmap()->GetBasis(0)->GetNumModes(),
-                     m_edges[2]->GetXmap()->GetBasis(0)->GetNumModes());
-    int order1 = max(m_edges[1]->GetXmap()->GetBasis(0)->GetNumModes(),
-                     m_edges[3]->GetXmap()->GetBasis(0)->GetNumModes());
+    int order0 = std::max(m_edges[0]->GetXmap()->GetBasis(0)->GetNumModes(),
+                          m_edges[2]->GetXmap()->GetBasis(0)->GetNumModes());
+    int order1 = std::max(m_edges[1]->GetXmap()->GetBasis(0)->GetNumModes(),
+                          m_edges[3]->GetXmap()->GetBasis(0)->GetNumModes());
 
     const LibUtilities::BasisKey B0(
         LibUtilities::eModified_A, order0,

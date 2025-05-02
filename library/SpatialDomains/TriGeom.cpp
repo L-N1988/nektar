@@ -41,8 +41,6 @@
 #include <SpatialDomains/GeomFactors.h>
 #include <SpatialDomains/SegGeom.h>
 
-using namespace std;
-
 namespace Nektar::SpatialDomains
 {
 
@@ -95,10 +93,6 @@ TriGeom::TriGeom(const TriGeom &in) : Geometry2D(in)
     {
         m_eorient[i] = in.m_eorient[i];
     }
-}
-
-TriGeom::~TriGeom()
-{
 }
 
 NekDouble TriGeom::v_GetCoord(const int i,
@@ -417,7 +411,7 @@ void TriGeom::v_FillGeom()
             const LibUtilities::BasisKey T1(LibUtilities::eOrtho_B, nEdgePts,
                                             P1);
             Array<OneD, NekDouble> phys(
-                max(nEdgePts * nEdgePts, m_xmap->GetTotPoints()));
+                std::max(nEdgePts * nEdgePts, m_xmap->GetTotPoints()));
             Array<OneD, NekDouble> tmp(nEdgePts * nEdgePts);
 
             for (i = 0; i < m_coordim; ++i)
@@ -556,9 +550,9 @@ void TriGeom::v_Setup()
 void TriGeom::SetUpXmap()
 {
     int order0 = m_edges[0]->GetXmap()->GetBasis(0)->GetNumModes();
-    int order1 =
-        max(order0, max(m_edges[1]->GetXmap()->GetBasis(0)->GetNumModes(),
-                        m_edges[2]->GetXmap()->GetBasis(0)->GetNumModes()));
+    int order1 = std::max(
+        order0, std::max(m_edges[1]->GetXmap()->GetBasis(0)->GetNumModes(),
+                         m_edges[2]->GetXmap()->GetBasis(0)->GetNumModes()));
 
     const LibUtilities::BasisKey B0(
         LibUtilities::eModified_A, order0,
