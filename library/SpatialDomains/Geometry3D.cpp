@@ -41,8 +41,6 @@
 #include <SpatialDomains/SegGeom.h>
 #include <iomanip>
 
-using namespace std;
-
 namespace Nektar::SpatialDomains
 {
 
@@ -54,10 +52,6 @@ Geometry3D::Geometry3D(const int coordim) : Geometry(coordim)
 {
     ASSERTL0(m_coordim > 2,
              "Coordinate dimension should be at least 3 for a 3D geometry.");
-}
-
-Geometry3D::~Geometry3D()
-{
 }
 
 //---------------------------------------
@@ -355,11 +349,12 @@ void Geometry3D::NewtonIterationForLocCoord(
 
             ss << "Reached MaxIterations (" << MaxIterations
                << ") in Newton iteration ";
-            ss << "Init value (" << setprecision(4) << init0 << "," << init1
-               << "," << init2 << ") ";
+            ss << "Init value (" << std::setprecision(4) << init0 << ","
+               << init1 << "," << init2 << ") ";
             ss << "Fin  value (" << Lcoords[0] << "," << Lcoords[1] << ","
                << Lcoords[2] << ") ";
-            ss << "Resid = " << resid << " Tolerance = " << sqrt(ScaledTol);
+            ss << "Resid = " << resid
+               << " Tolerance = " << std::sqrt(ScaledTol);
 
             WARNINGL1(cnt < MaxIterations, ss.str());
         }
