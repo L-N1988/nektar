@@ -35,6 +35,7 @@ v5.8.0
 - Remove dummy `APESolver` executable. (!2119)
 - Tidy use of boost_lexical_cast (!2109)
 - Tidy-up SpatialDomains (!2120)
+- Remove NekInt, NekInt32, NekInt64, NekUInt, NekUInt32, NekUInt64 typedef (!2123)
 
 **CI**
 - Fix CubeAllElements performance test tolerance (!1943)
