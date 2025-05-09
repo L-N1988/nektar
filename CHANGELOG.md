@@ -37,6 +37,7 @@ v5.8.0
 - Tidy-up SpatialDomains (!2120)
 - Remove NekInt, NekInt32, NekInt64, NekUInt, NekUInt32, NekUInt64 typedef (!2123)
 - Fix CMake warnings related to modern policy changes (!2129)
+- Add support for unsigned int in SessionReader parameters (!2127)
 
 **CI**
 - Fix CubeAllElements performance test tolerance (!1943)
