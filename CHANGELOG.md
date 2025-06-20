@@ -1,5 +1,9 @@
 Changelog
 =========
+v5.9.0
+------
+**NekMesh**
+- Minor Bug-fix for industrial pipeline !2057 (!2135)
 
 v5.8.0
 ------
