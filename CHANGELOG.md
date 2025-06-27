@@ -1,5 +1,9 @@
 Changelog
 =========
+v5.9.0
+------
+**Library**
+ - Remove deprecated TimeIntegrationMethod in SolverInfo
 
 v5.8.0
 ------

@@ -11,11 +11,15 @@
             <I PROPERTY="EvolutionOperator"          VALUE="Nonlinear"               />
             <I PROPERTY="Projection"                 VALUE="Galerkin"                />
             <I PROPERTY="GlobalSysSoln"              VALUE="IterativeStaticCond"     />
-            <I PROPERTY="TimeIntegrationMethod"      VALUE="IMEXOrder2"              />
             <I PROPERTY="SPECTRALHPDEALIASING"       VALUE="True"                    />
             <I PROPERTY="Driver"                     VALUE="Standard"                />
             <I PROPERTY="SpectralVanishingViscosity" VALUE="DGKernel"                />
         </SOLVERINFO>
+
+        <TIMEINTEGRATIONSCHEME>
+            <METHOD> IMEX </METHOD>
+            <ORDER> 2 </ORDER>
+        </TIMEINTEGRATIONSCHEME>
 
         <PARAMETERS>
             <P> TimeStep      = 5e-4 </P>
