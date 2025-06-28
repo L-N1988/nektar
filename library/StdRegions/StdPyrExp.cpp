@@ -301,8 +301,7 @@ void StdPyrExp::v_BwdTrans_SumFacKernel(
         // increment mode in case order1!=order2
         for (j = order1; j < order2; ++j)
         {
-            int ijmax = max(i, j);
-            mode += order2 - ijmax;
+            mode += order2 - j;
         }
     }
 
@@ -493,8 +492,7 @@ void StdPyrExp::v_IProductWRTBase_SumFacKernel(
         // increment mode in case order1!=order2
         for (j = order1; j < order2; ++j)
         {
-            int ijmax = max(i, j);
-            mode += order2 - ijmax;
+            mode += order2 - j;
         }
     }
 
