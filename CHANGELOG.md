@@ -4,6 +4,7 @@ v5.9.0
 ------
 **Library**
 - Fix BwdTrans and IProduct in Collection and MatrixFee for variable P (!2178)
+- Add vectorized min/max support to AVX (!2179)
 
 **NekMesh**
 - Minor Bug-fix for industrial pipeline !2057 (!2135)
