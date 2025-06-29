@@ -844,6 +844,7 @@ const LibUtilities::BasisKey StdTriExp::v_GetTraceBasisKey(
         {
             switch (m_base[dir]->GetPointsType())
             {
+                case LibUtilities::eGaussLegendreWithMP:
                 case LibUtilities::eGaussLobattoLegendre:
                 {
                     return m_base[dir]->GetBasisKey();
@@ -864,6 +865,28 @@ const LibUtilities::BasisKey StdTriExp::v_GetTraceBasisKey(
         {
             switch (m_base[dir]->GetPointsType())
             {
+                case LibUtilities::eGaussLegendreWithMP:
+                case LibUtilities::eGaussLobattoLegendre:
+                {
+                    return LibUtilities::BasisKey(LibUtilities::eModified_A,
+                                                  m_base[dir]->GetNumModes(),
+                                                  m_base[dir]->GetPointsKey());
+                }
+                break;
+                case LibUtilities::eGaussLegendreWithM:
+                {
+                    LibUtilities::PointsKey pkey(
+                        m_base[dir]
+                                ->GetBasisKey()
+                                .GetPointsKey()
+                                .GetNumPoints() +
+                            1,
+                        LibUtilities::eGaussLegendreWithMP);
+                    return LibUtilities::BasisKey(LibUtilities::eModified_A,
+                                                  m_base[dir]->GetNumModes(),
+                                                  pkey);
+                }
+                break;
                 case LibUtilities::eGaussRadauMAlpha1Beta0:
                 {
                     LibUtilities::PointsKey pkey(
@@ -926,10 +949,55 @@ const LibUtilities::BasisKey StdTriExp::v_GetTraceBasisKey(
             }
         }
         break;
+        case LibUtilities::eOrtho_A:
+        {
+            switch (m_base[dir]->GetPointsType())
+            {
+                case LibUtilities::eGaussLegendreWithMP:
+                case LibUtilities::eGaussLobattoLegendre:
+                {
+                    return LibUtilities::BasisKey(LibUtilities::eGLL_Lagrange,
+                                                  m_base[dir]->GetNumModes(),
+                                                  m_base[dir]->GetPointsKey());
+                }
+                break;
+                default:
+                {
+                    NEKERROR(ErrorUtil::efatal,
+                             "Unexpected points distribution " +
+                                 LibUtilities::kPointsTypeStr
+                                     [m_base[dir]->GetPointsType()] +
+                                 " in StdTriExp::v_GetTraceBasisKey");
+                }
+            }
+        }
+        break;
         case LibUtilities::eOrtho_B:
         {
             switch (m_base[dir]->GetPointsType())
             {
+                case LibUtilities::eGaussLegendreWithMP:
+                case LibUtilities::eGaussLobattoLegendre:
+                {
+                    return LibUtilities::BasisKey(LibUtilities::eGLL_Lagrange,
+                                                  m_base[dir]->GetNumModes(),
+                                                  m_base[dir]->GetPointsKey());
+                }
+                break;
+                case LibUtilities::eGaussLegendreWithM:
+                {
+                    LibUtilities::PointsKey pkey(
+                        m_base[dir]
+                                ->GetBasisKey()
+                                .GetPointsKey()
+                                .GetNumPoints() +
+                            1,
+                        LibUtilities::eGaussLegendreWithMP);
+                    return LibUtilities::BasisKey(LibUtilities::eGLL_Lagrange,
+                                                  m_base[dir]->GetNumModes(),
+                                                  pkey);
+                }
+                break;
                 case LibUtilities::eGaussRadauMAlpha1Beta0:
                 {
                     LibUtilities::PointsKey pkey(
