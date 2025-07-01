@@ -6,6 +6,7 @@ v5.9.0
 - Fix BwdTrans and IProduct in Collection and MatrixFee for variable P (!2178)
 - Add vectorized min/max support to AVX (!2179)
 - Fix incorrect symmetry flux for interior penalty methods in DG (!1872)
+- Fix bug in ExpList (!2182)
 - Remove deprecated TimeIntegrationMethod in SolverInfo (!2061)
 - Some fix for PhysInterp1D (!2081)
 
