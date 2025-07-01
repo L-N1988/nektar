@@ -579,7 +579,7 @@ ExpList::ExpList(
                     int np10 = LibUtilities::GetDegreeOfExactness(
                         existing0.GetPointsType(), existing0.GetNumPoints());
                     int np11 = LibUtilities::GetDegreeOfExactness(
-                        existing0.GetPointsType(), existing0.GetNumPoints());
+                        existing1.GetPointsType(), existing1.GetNumPoints());
                     int nm00 = face0.GetNumModes();
                     int nm01 = face1.GetNumModes();
                     int nm10 = existing0.GetNumModes();
