@@ -46,10 +46,10 @@ class NodalTetExp : public TetExp
 {
     /** \brief Constructor using BasisKey class for quadrature
     points and order definition */
-    LOCAL_REGIONS_EXPORT NodalTetExp(
-        const LibUtilities::BasisKey &Ba, const LibUtilities::BasisKey &Bb,
-        const LibUtilities::BasisKey &Bc,
-        const SpatialDomains::TetGeomSharedPtr &geom);
+    LOCAL_REGIONS_EXPORT NodalTetExp(const LibUtilities::BasisKey &Ba,
+                                     const LibUtilities::BasisKey &Bb,
+                                     const LibUtilities::BasisKey &Bc,
+                                     SpatialDomains::Geometry3D *geom);
 
     LOCAL_REGIONS_EXPORT NodalTetExp(const LibUtilities::BasisKey &Ba,
                                      const LibUtilities::BasisKey &Bb,
