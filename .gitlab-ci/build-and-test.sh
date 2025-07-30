@@ -40,7 +40,7 @@ elif [[ $BUILD_TYPE == "full" ]]; then
                "-DNEKTAR_USE_CGNS:BOOL=ON"
                "-DNEKTAR_CCMIO_URL=https://www.nektar.info/ccmio/libccmio-2.6.1.tar.gz"
                "-DNEKTAR_USE_VTK:BOOL=ON"
-	       "-DNEKTAR_USE_LST:BOOL=ON"
+               "-DNEKTAR_USE_LST:BOOL=ON"
                "-DNEKTAR_BUILD_PYTHON:BOOL=ON"
                "-DNEKTAR_TEST_USE_HOSTFILE=ON"
                "-DNEKTAR_UTILITY_EXTRAS=ON"
