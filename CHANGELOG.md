@@ -13,6 +13,7 @@ v5.9.0
 - Replace `std::shared_ptr` with `std::unique_ptr` inside SpatialDomains (!2112)
 - Fix output messages clobbering error info in Lagrangian filter (!2200, !2202)
 - Unified IProductWRTDerivBaseOp align vector function for all 3D shapes (!2203)
+- Added a formula for the number of modes in a tetrahedron (!2205)
 
 **CardiacEPSolver**
 - Add script for converting CellML models into Nektar++ cell model code (!2185)
